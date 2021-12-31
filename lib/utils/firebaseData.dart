@@ -34,7 +34,7 @@ class FirebaseData {
   Future<List> materialType() async {
     List materialTypeList = [];
     QuerySnapshot<Map<String, dynamic>> data =
-        await fireStore.collection('MaterialType').get();
+        await fireStore.collection('MaterialType').orderBy("name").get();
     for (var item in data.docs) {
       materialTypeList.add(item["name"]);
     }
@@ -265,7 +265,8 @@ class FirebaseData {
               await material.reference.collection("semester").get();
 
           for (var semester in semesterReference.docs) {
-            for (var i = 1; i < 7; i++) {//for different semester
+            for (var i = 1; i < 7; i++) {
+              //for different semester
               if (semester.data()["name"] == "sem$i") {
                 List subjectsOfCourseList =
                     await subjectsOfCourse(courseName, i);
@@ -310,7 +311,7 @@ class FirebaseData {
                               .delete();
                         }
                       }
-                    }//deleteNone ended
+                    } //deleteNone ended
                   }
                   if (!materialOrNot) {
                     //if the subjects are present or not. if not present then updating the subjects
@@ -332,38 +333,124 @@ class FirebaseData {
     }
   }
 
-  Future<List> materialData(String courseName,
-      String materialType, String subjectName, int sem) async {
+  //true for add and false for update
+  Future<List> materialData(
+      context,
+      String addOrChangeOrNone,
+      String changeMaterialName,
+      String courseName,
+      String materialType,
+      String subjectName,
+      int sem,
+      String materialName,
+      String materialLink) async {
     List allTheMaterial = [];
 
     QuerySnapshot<Map<String, dynamic>> materialTypedata = await fireStore
         .collection('MaterialType')
         .where("name", isEqualTo: materialType)
         .get();
+    bool _isAddedOrChanged = false;
+    try {
+      for (var material in materialTypedata.docs) {
+        QuerySnapshot<Map<String, dynamic>> semesterReference =
+            await navigateIntoCollection(material, "semester", "sem$sem");
 
-    for (var material in materialTypedata.docs) {
-      QuerySnapshot<Map<String, dynamic>> semesterReference =
-          await navigateIntoCollection(material, "semester", "sem$sem");
+        for (var semester in semesterReference.docs) {
+          QuerySnapshot<Map<String, dynamic>> courseReference =
+              await navigateIntoCollection(semester, "course", courseName);
 
-      for (var semester in semesterReference.docs) {
-        QuerySnapshot<Map<String, dynamic>> courseReference =
-            await navigateIntoCollection(semester, "course", courseName);
+          for (var course in courseReference.docs) {
+            QuerySnapshot<Map<String, dynamic>> subjectReference =
+                await navigateIntoCollection(course, "subject", subjectName);
 
-        for (var course in courseReference.docs) {
-          QuerySnapshot<Map<String, dynamic>> subjectReference =
-              await navigateIntoCollection(course, "subject", subjectName);
+            for (var subject in subjectReference.docs) {
+              QuerySnapshot<Map<String, dynamic>> materialReference =
+                  await subject.reference.collection("material").orderBy("updatedOn").get();
+              for (var materialItem in materialReference.docs) {
+                switch (addOrChangeOrNone) {
+                  case "none":
+                    allTheMaterial.add(materialItem.data());
+                    break;
+                  case "Add":
+                    if (!_isAddedOrChanged) {
+                      if (materialItem["name"] != materialName ||
+                          materialItem["link"] != materialLink) {
+                        subject.reference.collection("material").add({
+                          "name": materialName,
+                          "link": materialLink,
+                          "updatedBy": userEmail,
+                          "updatedOn":
+                              "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                        });
+                        _isAddedOrChanged = true;
+                      } else {
+                        Fluttertoast.showToast(
+                            msg: "Course is already present in the database.",
+                            toastLength: Toast.LENGTH_LONG);
+                      }
+                      Fluttertoast.showToast(
+                          msg: "$materialType was successfully uploaded.");
+                      Navigator.of(context).pop();
+                    }
+                    break;
+                  case "Change":
+                    if (!_isAddedOrChanged) {
+                      QuerySnapshot<
+                          Map<String,
+                              dynamic>> docuIdSnapshot = await subject
+                          .reference //for gathering id of the document of course
+                          .collection("material")
+                          .where("name", isEqualTo: changeMaterialName)
+                          .get();
+                      for (var item in docuIdSnapshot.docs) {
+                        await subject.reference
+                            .collection("material")
+                            .doc(item.id)
+                            .update({
+                          "name": materialName,
+                          "link": materialLink,
+                          "updatedBy": userEmail,
+                          "updatedOn":
+                              "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                        });
+                        _isAddedOrChanged = true;
 
-          for (var subject in subjectReference.docs) {
-            QuerySnapshot<Map<String, dynamic>> materialReference =
-                await subject.reference.collection("material").get();
-            for (var materialItem in materialReference.docs) {
-              allTheMaterial.add(materialItem.data());
+                        Fluttertoast.showToast(
+                            msg: "$materialType was successfully updated.");
+                        Navigator.of(context).pop();
+                      }
+                    }
+                    break;
+                  case "Delete":
+                    QuerySnapshot<
+                        Map<String,
+                            dynamic>> docuIdSnapshot = await subject
+                        .reference //for gathering id of the document of course
+                        .collection("material")
+                        .where("name", isEqualTo: changeMaterialName)
+                        .get();
+                    for (var item in docuIdSnapshot.docs) {
+                      await subject.reference
+                          .collection("material")
+                          .doc(item.id)
+                          .delete();
+                      _isAddedOrChanged = true;
+
+                      Fluttertoast.showToast(
+                          msg: "$materialType was successfully Deleted.");
+                      Navigator.of(context).pop();
+                    }
+                }
+              }
             }
           }
         }
       }
+    } on FirebaseException catch (e) {
+      print(e.message);
     }
-    print(allTheMaterial);
+    // print(allTheMaterial);
     return allTheMaterial;
   }
 }

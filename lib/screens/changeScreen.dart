@@ -1,6 +1,6 @@
 import 'package:cmseduc/screens/addOrChangeCourse.dart';
 import 'package:cmseduc/screens/addOrChangeResources.dart';
-import 'package:cmseduc/screens/documentScreen.dart';
+import 'package:cmseduc/screens/configureResources.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +25,6 @@ class _ChangeScreenState extends State<ChangeScreen> {
   List _materialList = [];
   List _subjectList = [];
   List _semesterList = [1, 2, 3, 4, 5, 6];
-  List _documentsList = [];
 
   Map _resourcesItemMap = {
     "Course": "none",
@@ -35,11 +34,10 @@ class _ChangeScreenState extends State<ChangeScreen> {
 
   bool _isEverythingSelected = false;
   bool _subjectListLoaded = false;
-  bool _isDocumentsLoaded = false;
 
   @override
   void initState() {
-    loadInitialData();
+    _loadInitialData();
     super.initState();
   }
 
@@ -92,7 +90,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
                       msg: "Please select every field.",
                       toastLength: Toast.LENGTH_LONG);
                 } else {
-                  loadResourcesData();
+                  _loadResourcesData();
                 }
               },
               child: Text("Load Subjects"),
@@ -104,8 +102,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
         Expanded(
           child: _isEverythingSelected
               ? _subjectListLoaded
-                  ? fullWidthListViewBuilder(
-                      context, _subjectList)
+                  ? _fullWidthListViewBuilder(context, _subjectList)
                   : CircularProgressIndicator(
                       color: selectedIconColor,
                       strokeWidth: 4.0,
@@ -182,6 +179,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
     );
   }
 
+  //screen for changing the courses and adding new
   Widget configureCourse() {
     return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -197,11 +195,10 @@ class _ChangeScreenState extends State<ChangeScreen> {
                       context,
                       PageRouteBuilder(pageBuilder:
                           (BuildContext context, animation1, animation2) {
-                        return 
-                             AddOrChangeCourse(
-                                addOrChange: "Add New",
-                                changeCourse: "none",
-                              );
+                        return AddOrChangeCourse(
+                          addOrChange: "Add New",
+                          changeCourse: "none",
+                        );
                       }, transitionsBuilder:
                           (context, animation, secondaryAnimation, child) {
                         const begin = Offset(1.0, 0.0);
@@ -241,48 +238,68 @@ class _ChangeScreenState extends State<ChangeScreen> {
               ),
             ),
           ),
-          _lightTextWidget("Current ourses List"),
+          _lightTextWidget("Current Courses List"),
           Expanded(
             child: RefreshIndicator(
-              onRefresh: loadInitialData,
-              child:  fullWidthListViewBuilder(
-                      context, _courseList)
-            ),
+                onRefresh: _loadInitialData,
+                child: _fullWidthListViewBuilder(context, _courseList)),
           )
         ]);
   }
 
-  Future<void> loadInitialData() async {
-    _courseList = await FirebaseData().courses();
-    _materialList = await FirebaseData().materialType();
-
-    if (widget.changeItem == "Courses") {
-      for (var course in _courseList) {
-        _uploadedAtAndBy[course] = await FirebaseData().uploadByAndAt(course);
-      }
-    }
-
+  Future<void> _loadInitialData() async {
     try {
+      _courseList = await FirebaseData().courses();
+      _materialList = await FirebaseData().materialType();
+
+      if (widget.changeItem == "Courses") {
+        for (var course in _courseList) {
+          _uploadedAtAndBy[course] = await FirebaseData().uploadByAndAt(course);
+        }
+      }
+
       setState(() {
         _isLoading = false;
       });
     } catch (e) {}
   }
 
-  Future<void> loadResourcesData() async {
-    _subjectList = await FirebaseData().subjectsOfCourse(
-        _resourcesItemMap["Course"], int.parse(_resourcesItemMap["Semester"]));
+  Future<void> _loadResourcesData() async {
+    try {
+      _subjectList = await FirebaseData().subjectsOfCourse(
+          _resourcesItemMap["Course"],
+          int.parse(_resourcesItemMap["Semester"]));
 
-    if (_subjectList.isNotEmpty) {
-      setState(() {
-        _isEverythingSelected = true;
-        _subjectListLoaded = true;
-      });
-    }
+      for (var subject in _subjectList) {
+        List documentData = await FirebaseData().materialData(
+            context,
+            "none",
+            "",
+            _resourcesItemMap["Course"],
+            _resourcesItemMap["Material"],
+            subject,
+            int.parse(_resourcesItemMap["Semester"]),
+            "",
+            "");
+        if (documentData.length != 0) {
+          _uploadedAtAndBy[subject] = [
+            documentData.first["updatedOn"],
+            documentData.first["updatedBy"]
+          ];
+        } else {
+          _uploadedAtAndBy[subject] = ["\'No Record\'", "\'No Record\'"];
+        }
+      }
+      if (_subjectList.isNotEmpty) {
+        setState(() {
+          _isEverythingSelected = true;
+          _subjectListLoaded = true;
+        });
+      }
+    } catch (e) {}
   }
 
-  Widget fullWidthListViewBuilder(
-      dynamic context, List namesList) {
+  Widget _fullWidthListViewBuilder(dynamic context, List namesList) {
     return Padding(
         padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 0),
         child: ClipRRect(
@@ -293,15 +310,14 @@ class _ChangeScreenState extends State<ChangeScreen> {
                   itemBuilder: (BuildContext context, int index) {
                     return Container(
                       padding: const EdgeInsets.only(bottom: 10.0),
-                      child: fullWidthRoundedRectangleWidget(
+                      child: _fullWidthRoundedRectangleWidget(
                           context, namesList[index]),
                     );
                   }),
             )));
   }
 
-  Widget fullWidthRoundedRectangleWidget(
-      dynamic context, String title) {
+  Widget _fullWidthRoundedRectangleWidget(dynamic context, String title) {
     // double widthOfBox = ((MediaQuery.of(context).size.width));
     return InkWell(
       focusColor: Colors.transparent,
@@ -332,9 +348,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      widget.changeItem == "Courses"
-                          ? "Uploaded on ${_uploadedAtAndBy[title][0]}."
-                          : "Last updated on 21 December 2021",
+                      "Last Updated on ${_uploadedAtAndBy[title][0]}",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -343,9 +357,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
                           fontSize: 12),
                     ),
                     Text(
-                      widget.changeItem == "Courses"
-                          ? "By " + _uploadedAtAndBy[title][1]
-                          : "By Yash",
+                      "By " + _uploadedAtAndBy[title][1],
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -370,7 +382,11 @@ class _ChangeScreenState extends State<ChangeScreen> {
                       addOrChange: "Change",
                       changeCourse: title,
                     )
-                  : COnfigureResources(addOrChange: "", subject: "");
+                  : ConfigureResources(
+                      materialType: _resourcesItemMap["Material"],
+                      subject: title,
+                      course: _resourcesItemMap["Course"],
+                      semester: int.parse(_resourcesItemMap["Semester"]));
             }, transitionsBuilder:
                     (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
@@ -388,5 +404,4 @@ class _ChangeScreenState extends State<ChangeScreen> {
       },
     );
   }
-
 }
