@@ -256,46 +256,48 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
   }
 
   Future<void> prefillTextField() async {
-    if (widget.addOrChange == "Change") {
-      Map subjectMap =
-          await FirebaseData().subjectMapOfCourse(widget.changeCourse);
-      nameOfTheCourseController.text = widget.changeCourse;
+    try {
+      if (widget.addOrChange == "Change") {
+        Map subjectMap =
+            await FirebaseData().subjectMapOfCourse(widget.changeCourse);
+        nameOfTheCourseController.text = widget.changeCourse;
 
-      sem1Sub1.text = subjectMap["sem1"][0];
-      sem1Sub2.text = subjectMap["sem1"][1];
-      sem1Sub3.text = subjectMap["sem1"][2];
-      sem1Sub4.text = subjectMap["sem1"][3];
-      sem1Sub5.text = subjectMap["sem1"][4];
+        sem1Sub1.text = subjectMap["sem1"][0];
+        sem1Sub2.text = subjectMap["sem1"][1];
+        sem1Sub3.text = subjectMap["sem1"][2];
+        sem1Sub4.text = subjectMap["sem1"][3];
+        sem1Sub5.text = subjectMap["sem1"][4];
 
-      sem2Sub1.text = subjectMap["sem2"][0];
-      sem2Sub2.text = subjectMap["sem2"][1];
-      sem2Sub3.text = subjectMap["sem2"][2];
-      sem2Sub4.text = subjectMap["sem2"][3];
-      sem2Sub5.text = subjectMap["sem2"][4];
+        sem2Sub1.text = subjectMap["sem2"][0];
+        sem2Sub2.text = subjectMap["sem2"][1];
+        sem2Sub3.text = subjectMap["sem2"][2];
+        sem2Sub4.text = subjectMap["sem2"][3];
+        sem2Sub5.text = subjectMap["sem2"][4];
 
-      sem3Sub1.text = subjectMap["sem3"][0];
-      sem3Sub2.text = subjectMap["sem3"][1];
-      sem3Sub3.text = subjectMap["sem3"][2];
-      sem3Sub4.text = subjectMap["sem3"][3];
-      sem3Sub5.text = subjectMap["sem3"][4];
+        sem3Sub1.text = subjectMap["sem3"][0];
+        sem3Sub2.text = subjectMap["sem3"][1];
+        sem3Sub3.text = subjectMap["sem3"][2];
+        sem3Sub4.text = subjectMap["sem3"][3];
+        sem3Sub5.text = subjectMap["sem3"][4];
 
-      sem4Sub1.text = subjectMap["sem4"][0];
-      sem4Sub2.text = subjectMap["sem4"][1];
-      sem4Sub3.text = subjectMap["sem4"][2];
-      sem4Sub4.text = subjectMap["sem4"][3];
-      sem4Sub5.text = subjectMap["sem4"][4];
+        sem4Sub1.text = subjectMap["sem4"][0];
+        sem4Sub2.text = subjectMap["sem4"][1];
+        sem4Sub3.text = subjectMap["sem4"][2];
+        sem4Sub4.text = subjectMap["sem4"][3];
+        sem4Sub5.text = subjectMap["sem4"][4];
 
-      sem5Sub1.text = subjectMap["sem5"][0];
-      sem5Sub2.text = subjectMap["sem5"][1];
-      sem5Sub3.text = subjectMap["sem5"][2];
-      sem5Sub4.text = subjectMap["sem5"][3];
-      sem5Sub5.text = subjectMap["sem5"][4];
+        sem5Sub1.text = subjectMap["sem5"][0];
+        sem5Sub2.text = subjectMap["sem5"][1];
+        sem5Sub3.text = subjectMap["sem5"][2];
+        sem5Sub4.text = subjectMap["sem5"][3];
+        sem5Sub5.text = subjectMap["sem5"][4];
 
-      sem6Sub1.text = subjectMap["sem6"][0];
-      sem6Sub2.text = subjectMap["sem6"][1];
-      sem6Sub3.text = subjectMap["sem6"][2];
-      sem6Sub4.text = subjectMap["sem6"][3];
-      sem6Sub5.text = subjectMap["sem6"][4];
-    }
+        sem6Sub1.text = subjectMap["sem6"][0];
+        sem6Sub2.text = subjectMap["sem6"][1];
+        sem6Sub3.text = subjectMap["sem6"][2];
+        sem6Sub4.text = subjectMap["sem6"][3];
+        sem6Sub5.text = subjectMap["sem6"][4];
+      }
+    } catch (e) {}
   }
 }

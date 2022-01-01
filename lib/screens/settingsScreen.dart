@@ -82,6 +82,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> loadData() async {
     courseList = await FirebaseData().courses();
+    // for (var item in courseList) {
+    //   FirebaseData().addingSemesterNoAndCourse("Youtube Playlists", item, true);
+    //   break;
+    // }
   }
 
   Widget roundedRectangleWidget(dynamic context, String title) {

@@ -174,55 +174,62 @@ class FirebaseData {
   }
 
   // funtion for adding semester no and course into database
-  // Future<void> addingSemesterNoAndCourse(String materialType, String courseName) async {
-  //   QuerySnapshot<Map<String, dynamic>> moviesRef = await FirebaseFirestore
-  //       .instance
-  //       .collection('movies')
-  //       .where("name", isEqualTo: materialType)
-  //       .get();
-  //   // print(moviesRef.docs.length);
-  //   for (var materialType in moviesRef.docs) {
+  // Future<void> addingSemesterNoAndCourse(
+  //     String materialType, String courseName, bool addSemOrRest) async {
+  //   //true for adding sem
+  //   QuerySnapshot<Map<String, dynamic>> materialTypeRef =
+  //       await FirebaseFirestore.instance
+  //           .collection('MaterialType')
+  //           .where("name", isEqualTo: materialType)
+  //           .get();
+  //   // print(materialTypeRef.docs.length);
+  //   for (var material in materialTypeRef.docs) {
   //     //for adding semester nos
-  //     // final materialTypeData = collectionReference("semester", materialType);
-
-  //     for (var i = 1; i < 7; i++) {
-  //       print(i);
-  //       //for adding semester nos
-  //       // await materialTypeData.add(
-  //       //   CreateCollection(name: 'sem$i'),
-  //       // );
-
-  //       QuerySnapshot<Map<String, dynamic>> semesterDataRef =
-  //           await navigateIntoCollection(materialType, "semester", "sem$i");
-
-  //       for (var sem in semesterDataRef.docs) {
-  //         final semData = collectionReference("course", sem);
-  //         await semData.add(
-  //           CreateCollection(name: courseName),
+  //     if (addSemOrRest) {
+  //       final materialTypeData = collectionReference("semester", material);
+  //       for (var i = 1; i < 7; i++) {
+  //         print(i);
+  //         //for adding semester nos
+  //         await materialTypeData.add(
+  //           CreateCollection(name: 'sem$i'),
   //         );
-  //         QuerySnapshot<Map<String, dynamic>> courseDataRef =
-  //             await navigateIntoCollection(sem, "course", courseName);
+  //       }
+  //     } else {
+  //       for (var i = 1; i < 7; i++) {
+  //         print(i);
 
-  //         for (var course in courseDataRef.docs) {
-  //           final courseData = collectionReference("subject", course);
-  //           await courseData.add(
-  //             CreateCollection(name: 'none'),
+  //         QuerySnapshot<Map<String, dynamic>> semesterDataRef =
+  //             await navigateIntoCollection(material, "semester", "sem$i");
+
+  //         for (var sem in semesterDataRef.docs) {
+  //           final semData = collectionReference("course", sem);
+  //           await semData.add(
+  //             CreateCollection(name: courseName),
   //           );
-  //           QuerySnapshot<Map<String, dynamic>> subjectDataRef =
-  //               await navigateIntoCollection(course, "subject", "none");
+  //           QuerySnapshot<Map<String, dynamic>> courseDataRef =
+  //               await navigateIntoCollection(sem, "course", courseName);
 
-  //           for (var subject in subjectDataRef.docs) {
-  //             final subjectData =
-  //                 await collectionReference("material", subject);
-  //             await subjectData.add(
+  //           for (var course in courseDataRef.docs) {
+  //             final courseData = collectionReference("subject", course);
+  //             await courseData.add(
   //               CreateCollection(name: 'none'),
   //             );
+  //             QuerySnapshot<Map<String, dynamic>> subjectDataRef =
+  //                 await navigateIntoCollection(course, "subject", "none");
+
+  //             for (var subject in subjectDataRef.docs) {
+  //               final subjectData =
+  //                   await collectionReference("material", subject);
+  //               await subjectData.add(
+  //                 CreateCollection(name: 'none'),
+  //               );
+  //             }
   //           }
   //         }
-  //       }
-  //       if (i == 6) {
-  //         print("done");
-  //         break;
+  //         if (i == 6) {
+  //           print("done");
+  //           break;
+  //         }
   //       }
   //     }
   //     break;
@@ -366,7 +373,10 @@ class FirebaseData {
 
             for (var subject in subjectReference.docs) {
               QuerySnapshot<Map<String, dynamic>> materialReference =
-                  await subject.reference.collection("material").orderBy("updatedOn").get();
+                  await subject.reference
+                      .collection("material")
+                      .orderBy("updatedOn")
+                      .get();
               for (var materialItem in materialReference.docs) {
                 switch (addOrChangeOrNone) {
                   case "none":

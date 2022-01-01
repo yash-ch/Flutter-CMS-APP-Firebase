@@ -1,5 +1,4 @@
 import 'package:cmseduc/screens/addOrChangeCourse.dart';
-import 'package:cmseduc/screens/addOrChangeResources.dart';
 import 'package:cmseduc/screens/configureResources.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
@@ -33,7 +32,6 @@ class _ChangeScreenState extends State<ChangeScreen> {
   };
 
   bool _isEverythingSelected = false;
-  bool _subjectListLoaded = false;
 
   @override
   void initState() {
@@ -69,114 +67,6 @@ class _ChangeScreenState extends State<ChangeScreen> {
             : widget.changeItem == "Courses"
                 ? configureCourse()
                 : resourcesAddOrChange());
-  }
-
-  //for resources widget
-  Widget resourcesAddOrChange() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        _chooseItemWidget(_materialList, "Material"),
-        _chooseItemWidget(_courseList, "Course"),
-        _chooseItemWidget(_semesterList, "Semester"),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: ElevatedButton(
-              onPressed: () {
-                if (_resourcesItemMap.values.contains("none")) {
-                  Fluttertoast.showToast(
-                      msg: "Please select every field.",
-                      toastLength: Toast.LENGTH_LONG);
-                } else {
-                  _loadResourcesData();
-                }
-              },
-              child: Text("Load Subjects"),
-              style: ElevatedButton.styleFrom(primary: selectedIconColor),
-            ),
-          ),
-        ),
-        _lightTextWidget("Subjects"),
-        Expanded(
-          child: _isEverythingSelected
-              ? _subjectListLoaded
-                  ? _fullWidthListViewBuilder(context, _subjectList)
-                  : CircularProgressIndicator(
-                      color: selectedIconColor,
-                      strokeWidth: 4.0,
-                    )
-              : Center(child: Text("No Subject Data")),
-        )
-      ],
-    );
-  }
-
-  //for resources widget
-  Widget _chooseItemWidget(List namesList, String title) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _lightTextWidget("Select $title"),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
-          child: InkWell(
-            onTap: () {
-              showMaterialRadioPicker(
-                context: context,
-                items: namesList,
-                selectedItem: _resourcesItemMap[title],
-                title: title,
-                onChanged: (value) {
-                  _resourcesItemMap[title] = value.toString();
-                  setState(() {});
-                },
-                maxLongSide: title == "Material"
-                    ? 420
-                    : title == "Semester"
-                        ? 470
-                        : 600,
-              );
-            },
-            child: Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.all(Radius.circular(20)),
-                child: Container(
-                  padding: EdgeInsets.fromLTRB(8.0, 10.0, 5, 10),
-                  color: Get.isDarkMode ? offBlackColor : offWhiteColor,
-                  child: Row(
-                    // mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(5.0, 0.0, 10.0, 0.0),
-                        child:
-                            Icon(Icons.list_rounded, color: selectedIconColor),
-                      ),
-                      Text(
-                        _resourcesItemMap[title],
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _lightTextWidget(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
-      child: Text(
-        title,
-        style:
-            Get.isDarkMode ? darkModeLightTextStyle : lightModeLightTextStyle,
-      ),
-    );
   }
 
   //screen for changing the courses and adding new
@@ -247,6 +137,111 @@ class _ChangeScreenState extends State<ChangeScreen> {
         ]);
   }
 
+  //for resources widget
+  Widget resourcesAddOrChange() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        _chooseItemWidget(_materialList, "Material"),
+        _chooseItemWidget(_courseList, "Course"),
+        _chooseItemWidget(_semesterList, "Semester"),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: ElevatedButton(
+              onPressed: () {
+                if (_resourcesItemMap.values.contains("none")) {
+                  Fluttertoast.showToast(
+                      msg: "Please select every field.",
+                      toastLength: Toast.LENGTH_LONG);
+                } else {
+                  Fluttertoast.showToast(
+                      msg: "Subjects list is loading, Please wait.",
+                      toastLength: Toast.LENGTH_LONG);
+                  _loadResourcesData();
+                }
+              },
+              child: Text("Load Subjects"),
+              style: ElevatedButton.styleFrom(primary: selectedIconColor),
+            ),
+          ),
+        ),
+        _lightTextWidget("Subjects"),
+        Expanded(
+          child: _isEverythingSelected
+              ? _fullWidthListViewBuilder(context, _subjectList)
+              : Center(child: Text("No Subject Data")),
+        )
+      ],
+    );
+  }
+
+  //for resources widget
+  Widget _chooseItemWidget(List namesList, String title) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _lightTextWidget("Select $title"),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
+          child: InkWell(
+            onTap: () {
+              showMaterialRadioPicker(
+                context: context,
+                items: namesList,
+                selectedItem: _resourcesItemMap[title],
+                title: title,
+                onChanged: (value) {
+                  _resourcesItemMap[title] = value.toString();
+                  setState(() {});
+                },
+                maxLongSide: title == "Material"
+                    ? 420
+                    : title == "Semester"
+                        ? 470
+                        : 600,
+              );
+            },
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.all(Radius.circular(20)),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(8.0, 10.0, 5, 10),
+                  color: Get.isDarkMode ? offBlackColor : offWhiteColor,
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(5.0, 0.0, 10.0, 0.0),
+                        child:
+                            Icon(Icons.list_rounded, color: selectedIconColor),
+                      ),
+                      Text(
+                        _resourcesItemMap[title],
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _lightTextWidget(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
+      child: Text(
+        title,
+        style:
+            Get.isDarkMode ? darkModeLightTextStyle : lightModeLightTextStyle,
+      ),
+    );
+  }
+
   Future<void> _loadInitialData() async {
     try {
       _courseList = await FirebaseData().courses();
@@ -274,13 +269,13 @@ class _ChangeScreenState extends State<ChangeScreen> {
         List documentData = await FirebaseData().materialData(
             context,
             "none",
-            "",
+            "none",
             _resourcesItemMap["Course"],
             _resourcesItemMap["Material"],
             subject,
             int.parse(_resourcesItemMap["Semester"]),
-            "",
-            "");
+            "none",
+            "none");
         if (documentData.length != 0) {
           _uploadedAtAndBy[subject] = [
             documentData.first["updatedOn"],
@@ -293,8 +288,10 @@ class _ChangeScreenState extends State<ChangeScreen> {
       if (_subjectList.isNotEmpty) {
         setState(() {
           _isEverythingSelected = true;
-          _subjectListLoaded = true;
         });
+      } else {
+        Fluttertoast.showToast(
+            msg: "Subjects are not available.", toastLength: Toast.LENGTH_LONG);
       }
     } catch (e) {}
   }
