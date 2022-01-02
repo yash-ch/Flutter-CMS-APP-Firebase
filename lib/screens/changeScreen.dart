@@ -1,5 +1,6 @@
-import 'package:cmseduc/screens/addOrChangeCourse.dart';
-import 'package:cmseduc/screens/configureResources.dart';
+import 'package:cmseduc/screens/mainScreen.dart';
+import 'package:cmseduc/screens/textFieldScreens/addOrChangeCourse.dart';
+import 'package:cmseduc/screens/configureScreen.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
 import 'package:flutter/material.dart';
@@ -89,20 +90,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
                           addOrChange: "Add New",
                           changeCourse: "none",
                         );
-                      }, transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        const begin = Offset(1.0, 0.0);
-                        const end = Offset.zero;
-                        const curve = Curves.linearToEaseOut;
-
-                        var tween = Tween(begin: begin, end: end)
-                            .chain(CurveTween(curve: curve));
-
-                        return SlideTransition(
-                          position: animation.drive(tween),
-                          child: child,
-                        );
-                      }));
+                      }, transitionsBuilder:transitionEffectForNavigator()));
                 },
                 child: Container(
                   height: 100.0,
@@ -128,7 +116,8 @@ class _ChangeScreenState extends State<ChangeScreen> {
               ),
             ),
           ),
-          _lightTextWidget("Current Courses List"),
+          lightTextWidget("Current Courses List"),
+          Padding(padding: EdgeInsets.all(5.0)),
           Expanded(
             child: RefreshIndicator(
                 onRefresh: _loadInitialData,
@@ -144,7 +133,9 @@ class _ChangeScreenState extends State<ChangeScreen> {
       mainAxisSize: MainAxisSize.max,
       children: [
         _chooseItemWidget(_materialList, "Material"),
+        Padding(padding: EdgeInsets.all(5.0)),
         _chooseItemWidget(_courseList, "Course"),
+        Padding(padding: EdgeInsets.all(5.0)),
         _chooseItemWidget(_semesterList, "Semester"),
         Center(
           child: Padding(
@@ -167,7 +158,8 @@ class _ChangeScreenState extends State<ChangeScreen> {
             ),
           ),
         ),
-        _lightTextWidget("Subjects"),
+        lightTextWidget("Subjects"),
+        Padding(padding: EdgeInsets.all(5.0)),
         Expanded(
           child: _isEverythingSelected
               ? _fullWidthListViewBuilder(context, _subjectList)
@@ -182,9 +174,9 @@ class _ChangeScreenState extends State<ChangeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _lightTextWidget("Select $title"),
+        lightTextWidget("Select $title"),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 10.0, 16.0, 0.0),
           child: InkWell(
             onTap: () {
               showMaterialRadioPicker(
@@ -197,7 +189,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
                   setState(() {});
                 },
                 maxLongSide: title == "Material"
-                    ? 420
+                    ? 470
                     : title == "Semester"
                         ? 470
                         : 600,
@@ -228,17 +220,6 @@ class _ChangeScreenState extends State<ChangeScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _lightTextWidget(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
-      child: Text(
-        title,
-        style:
-            Get.isDarkMode ? darkModeLightTextStyle : lightModeLightTextStyle,
-      ),
     );
   }
 
@@ -354,7 +335,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
                           fontSize: 12),
                     ),
                     Text(
-                      "By " + _uploadedAtAndBy[title][1],
+                      "By ${_uploadedAtAndBy[title][1]}",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -379,25 +360,17 @@ class _ChangeScreenState extends State<ChangeScreen> {
                       addOrChange: "Change",
                       changeCourse: title,
                     )
-                  : ConfigureResources(
-                      materialType: _resourcesItemMap["Material"],
-                      subject: title,
-                      course: _resourcesItemMap["Course"],
-                      semester: int.parse(_resourcesItemMap["Semester"]));
-            }, transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-              const begin = Offset(1.0, 0.0);
-              const end = Offset.zero;
-              const curve = Curves.linearToEaseOut;
-
-              var tween =
-                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-              return SlideTransition(
-                position: animation.drive(tween),
-                child: child,
-              );
-            }));
+                  : ConfigureScreen(
+                      whichScreen: "Resources",
+                      resources: {
+                        "materialType": _resourcesItemMap["Material"],
+                        "subject": title,
+                        "course": _resourcesItemMap["Course"],
+                        "semester": int.parse(_resourcesItemMap["Semester"])
+                      },
+                      // users: {},
+                    );
+            }, transitionsBuilder:transitionEffectForNavigator()));
       },
     );
   }

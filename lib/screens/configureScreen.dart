@@ -1,28 +1,27 @@
-import 'package:cmseduc/screens/addOrChangeResources.dart';
+import 'package:cmseduc/screens/mainScreen.dart';
+import 'package:cmseduc/screens/textFieldScreens/addOrChangeResources.dart';
+import 'package:cmseduc/screens/textFieldScreens/manageUsers.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:flutter/material.dart';
 import 'package:cmseduc/utils/style.dart';
 import 'package:get/route_manager.dart';
 
-class ConfigureResources extends StatefulWidget {
-  final String course;
-  final String subject;
-  final String materialType;
-  final int semester;
-
-  const ConfigureResources(
-      {Key? key,
-      required this.materialType,
-      required this.subject,
-      required this.course,
-      required this.semester})
-      : super(key: key);
+class ConfigureScreen extends StatefulWidget {
+  final String whichScreen;
+  final Map resources;
+  // final Map users;
+  const ConfigureScreen({
+    Key? key,
+    required this.whichScreen,
+    required this.resources,
+    // required this.users
+  }) : super(key: key);
 
   @override
-  _ConfigureResourcesState createState() => _ConfigureResourcesState();
+  _ConfigureScreenState createState() => _ConfigureScreenState();
 }
 
-class _ConfigureResourcesState extends State<ConfigureResources> {
+class _ConfigureScreenState extends State<ConfigureScreen> {
   List _documentsList = [];
   bool _isDocumentsLoaded = false;
 
@@ -44,7 +43,9 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
           backgroundColor:
               Get.isDarkMode ? darkBackgroundColor : lightBackgroundColor,
           title: Text(
-            widget.subject,
+            widget.whichScreen == "Resources"
+                ? widget.resources["subject"]
+                : "Users",
             overflow: TextOverflow.ellipsis,
             style: Get.isDarkMode ? DarkAppBarTextStyle : LightAppBarTextStyle,
           ),
@@ -70,28 +71,21 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
                                 PageRouteBuilder(pageBuilder:
                                     (BuildContext context, animation1,
                                         animation2) {
-                                  return AddOrChangeResources(
-                                    addOrChange: "Add",
-                                    semester: widget.semester,
-                                    subject: widget.subject,
-                                    course: widget.course,
-                                    materialType: widget.materialType,
-                                    changeMaterial: "none",
-                                  );
-                                }, transitionsBuilder: (context, animation,
-                                    secondaryAnimation, child) {
-                                  const begin = Offset(1.0, 0.0);
-                                  const end = Offset.zero;
-                                  const curve = Curves.linearToEaseOut;
-
-                                  var tween = Tween(begin: begin, end: end)
-                                      .chain(CurveTween(curve: curve));
-
-                                  return SlideTransition(
-                                    position: animation.drive(tween),
-                                    child: child,
-                                  );
-                                }));
+                                  return widget.whichScreen == "Resources"
+                                      ? AddOrChangeResources(
+                                          addOrChange: "Add",
+                                          semester:
+                                              widget.resources["semester"],
+                                          subject: widget.resources["subject"],
+                                          course: widget.resources["course"],
+                                          materialType:
+                                              widget.resources["materialType"],
+                                          changeMaterial: "none",
+                                        )
+                                      : ManageUsers(
+                                          addOrChange: "Add",
+                                          previousUserName: "none");
+                                }, transitionsBuilder: transitionEffectForNavigator()));
                           },
                           child: Container(
                             height: 100.0,
@@ -118,7 +112,11 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
                         ),
                       ),
                     ),
-                    _lightTextWidget("Current ${widget.materialType} List"),
+                    widget.whichScreen == "Resources"
+                        ? lightTextWidget(
+                            "Current ${widget.resources["materialType"]} List")
+                        : lightTextWidget("Current Users List"),
+                        Padding(padding: EdgeInsets.all(5.0)),
                     Expanded(
                       child: RefreshIndicator(
                           onRefresh: _loadMaterial,
@@ -134,39 +132,48 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
               ));
   }
 
-  Widget _lightTextWidget(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
-      child: Text(
-        title,
-        style:
-            Get.isDarkMode ? darkModeLightTextStyle : lightModeLightTextStyle,
-      ),
-    );
-  }
-
   Future<void> _loadMaterial() async {
     try {
-      _documentsList = [];
-      List documentData = await FirebaseData().materialData(
-          context,
-          "none",
-          "none",
-          widget.course,
-          widget.materialType,
-          widget.subject,
-          widget.semester,
-          "none",
-          "none");
+      if (widget.whichScreen == "Resources") {
+        _documentsList = [];
+        List documentData = await FirebaseData().materialData(
+            context,
+            "none",
+            "none",
+            widget.resources["course"],
+            widget.resources["materialType"],
+            widget.resources["subject"],
+            widget.resources["semester"],
+            "none",
+            "none");
 
-      for (var item in documentData) {
-        _documentsList.add(item["name"]);
-        _updatedBy[item["name"]] = item["updatedBy"];
-        _updatedOn[item["name"]] = item["updatedOn"];
+        for (var item in documentData) {
+          _documentsList.add(item["name"]);
+          _updatedBy[item["name"]] = item["updatedBy"];
+          _updatedOn[item["name"]] = item["updatedOn"];
+        }
+        setState(() {
+          _isDocumentsLoaded = true;
+        });
+      } else if (widget.whichScreen == "Manage Users") {
+        _documentsList = [];
+        _updatedOn ={};
+
+        Map userData = await FirebaseData().allUsers();
+        for (var user in userData.keys) {
+          _documentsList.add(user);
+          _updatedBy[user] = userData[user]["email"];
+          if (userData[user]["isAdmin"]) {
+            _updatedOn[user] = "Admin,";
+          }
+          if (userData[user]["courseAccess"]) {
+            _updatedOn[user] = _updatedOn[user] + " CourseAccess";
+          }
+        }
+        setState(() {
+          _isDocumentsLoaded = true;
+        });
       }
-      setState(() {
-        _isDocumentsLoaded = true;
-      });
     } catch (e) {}
   }
 
@@ -219,7 +226,10 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      "Last updated on ${_updatedOn[title]}",
+                      widget.whichScreen == "Resources"
+                          ? "Last updated on ${_updatedOn[title]}"
+                          // : "",
+                          : "Email : ${_updatedBy[title]}", //for email
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -228,7 +238,10 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
                           fontSize: 12),
                     ),
                     Text(
-                      "By ${_updatedBy[title]}",
+                      widget.whichScreen == "Resources"
+                          ? "By ${_updatedBy[title]}"
+                          // : "",
+                          : "Roles : ${_updatedOn[title]}",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -248,27 +261,16 @@ class _ConfigureResourcesState extends State<ConfigureResources> {
             context,
             PageRouteBuilder(
                 pageBuilder: (BuildContext context, animation1, animation2) {
-              return AddOrChangeResources(
-                  addOrChange: "Change",
-                  semester: widget.semester,
-                  subject: widget.subject,
-                  course: widget.course,
-                  materialType: widget.materialType,
-                  changeMaterial: title);
-            }, transitionsBuilder:
-                    (context, animation, secondaryAnimation, child) {
-              const begin = Offset(1.0, 0.0);
-              const end = Offset.zero;
-              const curve = Curves.linearToEaseOut;
-
-              var tween =
-                  Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-              return SlideTransition(
-                position: animation.drive(tween),
-                child: child,
-              );
-            }));
+              return widget.whichScreen == "Resources"
+                  ? AddOrChangeResources(
+                      addOrChange: "Change",
+                      semester: widget.resources["semester"],
+                      subject: widget.resources["subject"],
+                      course: widget.resources["course"],
+                      materialType: widget.resources["materialType"],
+                      changeMaterial: title)
+                  : ManageUsers(addOrChange: "Change", previousUserName: title);
+            }, transitionsBuilder:transitionEffectForNavigator()));
       },
     );
   }

@@ -1,3 +1,5 @@
+import 'package:cmseduc/screens/configureScreen.dart';
+import 'package:cmseduc/screens/mainScreen.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
 import 'package:flutter/material.dart';
@@ -48,21 +50,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24.0, 10.0, 0, 10.0),
-              child: Text(
-                "Update or Control",
-                style: Get.isDarkMode
-                    ? darkModeLightTextStyle
-                    : lightModeLightTextStyle,
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                roundedRectangleWidget(context, "Material Collection"),
-              ],
-            ),
+            lightTextWidget("Update or Control"),
+            Padding(padding: EdgeInsets.all(5.0)),
+            rectangleListViewBuilder(
+                context, ["Material Collection", "Manage Users"]),
             Center(
               child: Visibility(
                 visible: isProcessComplete,
@@ -86,6 +77,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
     //   FirebaseData().addingSemesterNoAndCourse("Youtube Playlists", item, true);
     //   break;
     // }
+  }
+
+  Widget rectangleListViewBuilder(dynamic context, List changeItemList) {
+    return ListView.builder(
+        physics: NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: changeItemList.length,
+        itemBuilder: (BuildContext context, int index) {
+          return Column(
+            children: [
+              index % 2 == 0 || index == 0
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        roundedRectangleWidget(context, changeItemList[index]),
+                        SizedBox(
+                          width: 20,
+                        ),
+                        changeItemList.length > index + 1
+                            ? roundedRectangleWidget(
+                                context, changeItemList[index + 1])
+                            : Offstage()
+                      ],
+                    )
+                  : Offstage(),
+              SizedBox(
+                height: 10,
+              )
+            ],
+          );
+        });
   }
 
   Widget roundedRectangleWidget(dynamic context, String title) {
@@ -119,7 +142,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       onTap: () {
-        _materialCollectionOnTap();
+        switch (title) {
+          case "Material Collection":
+            _materialCollectionOnTap();
+            break;
+          case "Manage Users":
+            _openConfigureScreen(title);
+            break;
+        }
       },
     );
   }
@@ -154,6 +184,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
   }
 
+  void _openConfigureScreen(String screenName) {
+    //for Manage users
+    Navigator.push(
+        context,
+        PageRouteBuilder(
+            pageBuilder: (BuildContext context, animation1, animation2) {
+          return ConfigureScreen(
+            whichScreen: screenName,
+            resources: {},
+            // users: {},
+          );
+        }, transitionsBuilder: transitionEffectForNavigator()));
+  }
+
   void approveMaterialCollection(
       String courseName, bool deleteNone, bool updateSubject) async {
     setState(() {
@@ -171,22 +215,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       isProcessComplete = false;
     });
-    // int i = 1;
-    // List courseList =
-    // [
-    //   "B.Sc. (H) Computer Science",
-    //   "B.Sc. (H) Mathematics"
-    // ];
-    // // await FirebaseData().courses();
-    // List materialList =
-    // ["Notes","Books"];
-    // // await FirebaseData().materialType();
-    // for (var material in materialList) {
-    //   print("material : $i");
-    //   for (var course in courseList) {
-    //     await FirebaseData().addingSemesterNoAndCourse(material, course);
-    //   }
-    //   i =i+1;
-    // }
   }
 }

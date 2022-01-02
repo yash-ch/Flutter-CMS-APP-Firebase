@@ -25,8 +25,7 @@ class _MainScreenState extends State<MainScreen> {
               Get.isDarkMode ? darkBackgroundColor : lightBackgroundColor,
           title: Text(
             "CMS educircle",
-            style:
-                Get.isDarkMode ? DarkAppBarTextStyle : LightAppBarTextStyle,
+            style: Get.isDarkMode ? DarkAppBarTextStyle : LightAppBarTextStyle,
           ),
           actions: [
             Padding(
@@ -44,15 +43,7 @@ class _MainScreenState extends State<MainScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
-                  child: Text(
-                    "Configure",
-                    style: Get.isDarkMode
-                        ? darkModeLightTextStyle
-                        : lightModeLightTextStyle,
-                  ),
-                ),
+                lightTextWidget("Configure"),
                 rectangleListViewBuilder(context, ["Courses"]),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
@@ -71,7 +62,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _settingsOnTap() async {
-    bool isAdmin = await FirebaseData().memberAdmin();
+    bool isAdmin = await FirebaseData().userRole("isAdmin");
     if (isAdmin) {
       Navigator.push(
           context,
@@ -93,7 +84,9 @@ class _MainScreenState extends State<MainScreen> {
             );
           }));
     } else {
-      Fluttertoast.showToast(msg: "Sorry, only admin(s) are allowed.");
+      Fluttertoast.showToast(
+          msg: "Sorry, only admin(s) are allowed.",
+          toastLength: Toast.LENGTH_LONG);
     }
   }
 }
@@ -111,8 +104,7 @@ Widget rectangleListViewBuilder(dynamic context, List changeItemList) {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      roundedRectangleWidget(
-                          context, changeItemList[index]),
+                      roundedRectangleWidget(context, changeItemList[index]),
                       SizedBox(
                         width: 20,
                       ),
@@ -163,45 +155,59 @@ Widget roundedRectangleWidget(dynamic context, String changeItem) {
       ),
     ),
     onTap: () {
-      Navigator.push(
-          context,
-          PageRouteBuilder(
-              pageBuilder: (BuildContext context, animation1, animation2) {
-            return ChangeScreen(changeItem: changeItem);
-          }, transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-            const begin = Offset(1.0, 0.0);
-            const end = Offset.zero;
-            const curve = Curves.linearToEaseOut;
-
-            var tween =
-                Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-            return SlideTransition(
-              position: animation.drive(tween),
-              child: child,
-            );
-          }));
+      if (changeItem == "Courses") {
+        _tappedOnCourse(context);
+      } else {
+        Navigator.push(
+            context,
+            PageRouteBuilder(
+                pageBuilder: (BuildContext context, animation1, animation2) {
+              return ChangeScreen(changeItem: changeItem);
+            }, transitionsBuilder:transitionEffectForNavigator() ));
+      }
     },
   );
 }
-// Center(
-//         child: Column(
-//           mainAxisAlignment: MainAxisAlignment.center,
-//           children: [
-//             Text("HOME"),
-//             ElevatedButton(
-//               onPressed: () {
-//                 context.read<AuthenticationService>().signOut();
-//               },
-//               child: Text("Sign out"),
-//             ),
-//             ElevatedButton(
-//                 onPressed: () {
-//                   final firebaseUser = Provider.of<User?>(context, listen : false);
-//                   print(firebaseUser?.email);
-//                 },
-//                 child: Text("User"))
-//           ],
-//         ),
-//       ),
+
+Future<void> _tappedOnCourse(context) async {
+  bool isCourseAccess = await FirebaseData().userRole("courseAccess");
+
+  if (isCourseAccess) {
+    Navigator.push(
+        context,
+        PageRouteBuilder(
+            pageBuilder: (BuildContext context, animation1, animation2) {
+              return ChangeScreen(changeItem: "Courses");
+            },
+            transitionsBuilder: transitionEffectForNavigator()));
+  } else {
+    Fluttertoast.showToast(
+        msg: "Sorry, you don't have access to this.",
+        toastLength: Toast.LENGTH_LONG);
+  }
+}
+
+transitionEffectForNavigator() {
+  return (context, animation, secondaryAnimation, child) {
+    const begin = Offset(1.0, 0.0);
+    const end = Offset.zero;
+    const curve = Curves.linearToEaseOut;
+
+    var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+    return SlideTransition(
+      position: animation.drive(tween),
+      child: child,
+    );
+  };
+}
+
+Widget lightTextWidget(String title) {
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 0.0),
+    child: Text(
+      title,
+      style: Get.isDarkMode ? darkModeLightTextStyle : lightModeLightTextStyle,
+    ),
+  );
+}

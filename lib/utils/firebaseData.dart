@@ -60,22 +60,6 @@ class FirebaseData {
     return subjectList;
   }
 
-  Future<bool> memberAdmin() async {
-    List nameOfTheCourses = [];
-    QuerySnapshot<Map<String, dynamic>> data = await fireStore
-        .collection('Members')
-        .where("isAdmin", isEqualTo: true)
-        .get();
-    for (var item in data.docs) {
-      nameOfTheCourses.add(item["email"]);
-    }
-    if (nameOfTheCourses.contains(userEmail)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   Future<List> uploadByAndAt(String courseName) async {
     List uploadByAt = [];
     QuerySnapshot<Map<String, dynamic>> courseData = await fireStore
@@ -375,12 +359,14 @@ class FirebaseData {
               QuerySnapshot<Map<String, dynamic>> materialReference =
                   await subject.reference
                       .collection("material")
-                      .orderBy("updatedOn")
+                      // .orderBy("updatedOn")
                       .get();
               for (var materialItem in materialReference.docs) {
                 switch (addOrChangeOrNone) {
                   case "none":
-                    allTheMaterial.add(materialItem.data());
+                    if (materialItem["name"] != "none") {
+                      allTheMaterial.add(materialItem.data());
+                    }
                     break;
                   case "Add":
                     if (!_isAddedOrChanged) {
@@ -462,6 +448,84 @@ class FirebaseData {
     }
     // print(allTheMaterial);
     return allTheMaterial;
+  }
+
+  Future<Map> allUsers() async {
+    Map users = {};
+    QuerySnapshot<Map<String, dynamic>> data =
+        await fireStore.collection('Members').get();
+    for (var item in data.docs) {
+      users[item["name"]] = {
+        "email": item["email"],
+        "isAdmin": item["isAdmin"],
+        "courseAccess": item["courseAccess"]
+      };
+    }
+    return users;
+  }
+
+  Future<bool> userRole(String role) async {
+    List nameOfTheCourses = [];
+    QuerySnapshot<Map<String, dynamic>> data = await fireStore
+        .collection('Members')
+        .where(role, isEqualTo: true)
+        .get();
+    for (var item in data.docs) {
+      nameOfTheCourses.add(item["email"]);
+    }
+    if (nameOfTheCourses.contains(userEmail)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  Future<void> manageUsers(
+      context,
+      String userEmailId,
+      String userName,
+      bool isAdmin,
+      bool courseAccess,
+      bool addOrChange,
+      String previousName) async {
+    //true for changing
+    Map users = await allUsers();
+    List usersEmailList = [];
+    for (var email in users.values) {
+      usersEmailList.add(email);
+    }
+    print(usersEmailList);
+    if (usersEmailList.contains(userEmailId) && !addOrChange) {
+      Fluttertoast.showToast(
+          msg: "User is already present in the database.",
+          toastLength: Toast.LENGTH_LONG);
+    } else {
+      if (!addOrChange) {
+        await fireStore.collection('Members').add({
+          "email": userEmailId,
+          "name": userName,
+          "isAdmin": isAdmin,
+          "courseAccess": courseAccess
+        });
+      } else {
+        QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
+            await fireStore //for gathering id of the document of course
+                .collection("Members")
+                .where("name", isEqualTo: previousName)
+                .get();
+        for (var item in docuIdSnapshot.docs) {
+          await fireStore.collection('Members').doc(item.id).update({
+            "email": userEmailId,
+            "name": userName,
+            "isAdmin": isAdmin,
+            "courseAccess": courseAccess
+          });
+        }
+      }
+    }
+    Fluttertoast.showToast(
+        msg: "User was successfully " + (!addOrChange ? "added." : "updated."));
+    Navigator.of(context).pop();
   }
 }
 

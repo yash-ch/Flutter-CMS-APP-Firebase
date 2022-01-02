@@ -138,14 +138,14 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24.0, 10.0, 0, 10.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
           child: Text(
             "Course",
             style: TextStyle(fontSize: SmallTextSize, color: selectedIconColor),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24.0, 0.0, 20.0, 20.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 20.0, 20.0),
           child: TextField(
             controller: nameOfTheCourseController,
             decoration: InputDecoration(
@@ -184,7 +184,7 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
             [sem6Sub1, sem6Sub2, sem6Sub3, sem6Sub4, sem6Sub5],
             ["Subject 1", "Subject 2", "Subject 3", "Subject 4", "Subject 5"]),
         Padding(
-          padding: const EdgeInsets.fromLTRB(24.0, 10.0, 0, 0.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 0.0),
           child: Text(
             (widget.addOrChange == "Change" ? "Update" : "Upload") +
                 " it even if you don't have all the subjects of the course, subjects can be edited later.",
@@ -196,24 +196,7 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(primary: selectedIconColor),
                 onPressed: () {
-                  if (nameOfTheCourseController.text.trim() != "") {
-                    setSemList();
-                    FirebaseData().addOrChangeCourse(
-                        context,
-                        widget.addOrChange == "Change" ? false : true,
-                        widget.changeCourse,
-                        nameOfTheCourseController.text.trim(),
-                        sem1List,
-                        sem2List,
-                        sem3List,
-                        sem4List,
-                        sem5List,
-                        sem6List);
-                  } else {
-                    Fluttertoast.showToast(
-                        msg: "Course name can't be left blank.",
-                        toastLength: Toast.LENGTH_LONG);
-                  }
+                  _onTapUpdateOrUpload();
                 },
                 child: widget.addOrChange == "Change"
                     ? Text("UPDATE")
@@ -230,7 +213,7 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(24.0, 10.0, 0, 10.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
           child: Text(
             "Semester $sem Subjects",
             style: TextStyle(fontSize: SmallTextSize, color: selectedIconColor),
@@ -242,7 +225,7 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
             itemCount: itemList.length,
             itemBuilder: (BuildContext context, int index) {
               return Padding(
-                padding: const EdgeInsets.fromLTRB(24.0, 0.0, 20.0, 10.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 0.0, 20.0, 10.0),
                 child: TextField(
                   controller: controllerList[index],
                   decoration: InputDecoration(
@@ -253,6 +236,34 @@ class _AddOrChangeCourseState extends State<AddOrChangeCourse> {
             }),
       ],
     );
+  }
+
+  Future<void> _onTapUpdateOrUpload() async {
+    bool _courseAccess = await FirebaseData().userRole("courseAccess");
+    if (_courseAccess) {
+      if (nameOfTheCourseController.text.trim() != "") {
+        setSemList();
+        FirebaseData().addOrChangeCourse(
+            context,
+            widget.addOrChange == "Change" ? false : true,
+            widget.changeCourse,
+            nameOfTheCourseController.text.trim(),
+            sem1List,
+            sem2List,
+            sem3List,
+            sem4List,
+            sem5List,
+            sem6List);
+      } else {
+        Fluttertoast.showToast(
+            msg: "Course name can't be left blank.",
+            toastLength: Toast.LENGTH_LONG);
+      }
+    } else {
+      Fluttertoast.showToast(
+          msg: "Sorry, you don't have access to configure course.",
+          toastLength: Toast.LENGTH_LONG);
+    }
   }
 
   Future<void> prefillTextField() async {
