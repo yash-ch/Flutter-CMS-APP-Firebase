@@ -44,6 +44,7 @@ class _MainScreenState extends State<MainScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 lightTextWidget("Configure"),
+                Padding(padding: EdgeInsets.all(5.0)),
                 rectangleListViewBuilder(context, ["Courses"]),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
@@ -155,36 +156,15 @@ Widget roundedRectangleWidget(dynamic context, String changeItem) {
       ),
     ),
     onTap: () {
-      if (changeItem == "Courses") {
-        _tappedOnCourse(context);
-      } else {
-        Navigator.push(
-            context,
-            PageRouteBuilder(
-                pageBuilder: (BuildContext context, animation1, animation2) {
-              return ChangeScreen(changeItem: changeItem);
-            }, transitionsBuilder:transitionEffectForNavigator() ));
-      }
+      Navigator.push(
+          context,
+          PageRouteBuilder(
+              pageBuilder: (BuildContext context, animation1, animation2) {
+                return ChangeScreen(changeItem: changeItem);
+              },
+              transitionsBuilder: transitionEffectForNavigator()));
     },
   );
-}
-
-Future<void> _tappedOnCourse(context) async {
-  bool isCourseAccess = await FirebaseData().userRole("courseAccess");
-
-  if (isCourseAccess) {
-    Navigator.push(
-        context,
-        PageRouteBuilder(
-            pageBuilder: (BuildContext context, animation1, animation2) {
-              return ChangeScreen(changeItem: "Courses");
-            },
-            transitionsBuilder: transitionEffectForNavigator()));
-  } else {
-    Fluttertoast.showToast(
-        msg: "Sorry, you don't have access to this.",
-        toastLength: Toast.LENGTH_LONG);
-  }
 }
 
 transitionEffectForNavigator() {

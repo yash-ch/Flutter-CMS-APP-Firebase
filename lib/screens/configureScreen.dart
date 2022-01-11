@@ -68,24 +68,28 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                           onTap: () {
                             Navigator.push(
                                 context,
-                                PageRouteBuilder(pageBuilder:
-                                    (BuildContext context, animation1,
-                                        animation2) {
-                                  return widget.whichScreen == "Resources"
-                                      ? AddOrChangeResources(
-                                          addOrChange: "Add",
-                                          semester:
-                                              widget.resources["semester"],
-                                          subject: widget.resources["subject"],
-                                          course: widget.resources["course"],
-                                          materialType:
-                                              widget.resources["materialType"],
-                                          changeMaterial: "none",
-                                        )
-                                      : ManageUsers(
-                                          addOrChange: "Add",
-                                          previousUserName: "none");
-                                }, transitionsBuilder: transitionEffectForNavigator()));
+                                PageRouteBuilder(
+                                    pageBuilder: (BuildContext context,
+                                        animation1, animation2) {
+                                      return widget.whichScreen == "Resources"
+                                          ? AddOrChangeResources(
+                                              addOrChange: "Add",
+                                              semester:
+                                                  widget.resources["semester"],
+                                              subject:
+                                                  widget.resources["subject"],
+                                              course:
+                                                  widget.resources["course"],
+                                              materialType: widget
+                                                  .resources["materialType"],
+                                              changeMaterial: "none",
+                                            )
+                                          : ManageUsers(
+                                              addOrChange: "Add",
+                                              previousUserName: "none");
+                                    },
+                                    transitionsBuilder:
+                                        transitionEffectForNavigator()));
                           },
                           child: Container(
                             height: 100.0,
@@ -116,7 +120,7 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                         ? lightTextWidget(
                             "Current ${widget.resources["materialType"]} List")
                         : lightTextWidget("Current Users List"),
-                        Padding(padding: EdgeInsets.all(5.0)),
+                    Padding(padding: EdgeInsets.all(5.0)),
                     Expanded(
                       child: RefreshIndicator(
                           onRefresh: _loadMaterial,
@@ -157,17 +161,23 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
         });
       } else if (widget.whichScreen == "Manage Users") {
         _documentsList = [];
-        _updatedOn ={};
+        _updatedOn = {};
 
         Map userData = await FirebaseData().allUsers();
         for (var user in userData.keys) {
+
           _documentsList.add(user);
           _updatedBy[user] = userData[user]["email"];
           if (userData[user]["isAdmin"]) {
+
             _updatedOn[user] = "Admin,";
           }
           if (userData[user]["courseAccess"]) {
-            _updatedOn[user] = _updatedOn[user] + " CourseAccess";
+            if (_updatedOn[user] == null) {
+              _updatedOn[user] = "CourseAccess";
+            } else {
+              _updatedOn[user] = _updatedOn[user] + " CourseAccess";
+            }
           }
         }
         setState(() {
@@ -261,16 +271,18 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
             context,
             PageRouteBuilder(
                 pageBuilder: (BuildContext context, animation1, animation2) {
-              return widget.whichScreen == "Resources"
-                  ? AddOrChangeResources(
-                      addOrChange: "Change",
-                      semester: widget.resources["semester"],
-                      subject: widget.resources["subject"],
-                      course: widget.resources["course"],
-                      materialType: widget.resources["materialType"],
-                      changeMaterial: title)
-                  : ManageUsers(addOrChange: "Change", previousUserName: title);
-            }, transitionsBuilder:transitionEffectForNavigator()));
+                  return widget.whichScreen == "Resources"
+                      ? AddOrChangeResources(
+                          addOrChange: "Change",
+                          semester: widget.resources["semester"],
+                          subject: widget.resources["subject"],
+                          course: widget.resources["course"],
+                          materialType: widget.resources["materialType"],
+                          changeMaterial: title)
+                      : ManageUsers(
+                          addOrChange: "Change", previousUserName: title);
+                },
+                transitionsBuilder: transitionEffectForNavigator()));
       },
     );
   }
