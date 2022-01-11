@@ -8,7 +8,6 @@
 .buildlog/
 .history
 .svn/
-.json
 
 # IntelliJ related
 *.iml
@@ -34,6 +33,7 @@
 
 # Web related
 lib/generated_plugin_registrant.dart
+android/app/google-services.json
 
 # Symbolication related
 app.*.symbols
