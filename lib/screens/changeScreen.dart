@@ -1,6 +1,6 @@
 import 'package:cmseduc/screens/mainScreen.dart';
-import 'package:cmseduc/screens/textFieldScreens/addOrChangeCourse.dart';
 import 'package:cmseduc/screens/configureScreen.dart';
+import 'package:cmseduc/screens/textFieldScreens/addOrChangeCourse.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
 import 'package:flutter/material.dart';
@@ -84,13 +84,15 @@ class _ChangeScreenState extends State<ChangeScreen> {
                 onTap: () {
                   Navigator.push(
                       context,
-                      PageRouteBuilder(pageBuilder:
-                          (BuildContext context, animation1, animation2) {
-                        return AddOrChangeCourse(
-                          addOrChange: "Add New",
-                          changeCourse: "none",
-                        );
-                      }, transitionsBuilder:transitionEffectForNavigator()));
+                      PageRouteBuilder(
+                          pageBuilder:
+                              (BuildContext context, animation1, animation2) {
+                            return AddOrChangeCourse(
+                              addOrChange: "Add New",
+                              changeCourse: "none",
+                            );
+                          },
+                          transitionsBuilder: transitionEffectForNavigator()));
                 },
                 child: Container(
                   height: 100.0,
@@ -225,15 +227,18 @@ class _ChangeScreenState extends State<ChangeScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      _courseList = await FirebaseData().courses();
-      _materialList = await FirebaseData().materialType();
+      if (widget.changeItem == "Courses" && widget.changeItem == "Resources") {
+        _courseList = await FirebaseData().courses();
+        _materialList = await FirebaseData().materialType();
 
-      if (widget.changeItem == "Courses") {
-        for (var course in _courseList) {
-          _uploadedAtAndBy[course] = await FirebaseData().uploadByAndAt(course);
+        if (widget.changeItem == "Courses") {
+          for (var course in _courseList) {
+            _uploadedAtAndBy[course] =
+                await FirebaseData().uploadByAndAt(course);
+          }
         }
-      }
-
+      } else if (widget.changeItem == "Top Banners") {
+      } else if (widget.changeItem == "Events") {}
       setState(() {
         _isLoading = false;
       });
@@ -355,22 +360,23 @@ class _ChangeScreenState extends State<ChangeScreen> {
             context,
             PageRouteBuilder(
                 pageBuilder: (BuildContext context, animation1, animation2) {
-              return widget.changeItem == "Courses"
-                  ? AddOrChangeCourse(
-                      addOrChange: "Change",
-                      changeCourse: title,
-                    )
-                  : ConfigureScreen(
-                      whichScreen: "Resources",
-                      resources: {
-                        "materialType": _resourcesItemMap["Material"],
-                        "subject": title,
-                        "course": _resourcesItemMap["Course"],
-                        "semester": int.parse(_resourcesItemMap["Semester"])
-                      },
-                      // users: {},
-                    );
-            }, transitionsBuilder:transitionEffectForNavigator()));
+                  return widget.changeItem == "Courses"
+                      ? AddOrChangeCourse(
+                          addOrChange: "Change",
+                          changeCourse: title,
+                        )
+                      : ConfigureScreen(
+                          whichScreen: "Resources",
+                          resources: {
+                            "materialType": _resourcesItemMap["Material"],
+                            "subject": title,
+                            "course": _resourcesItemMap["Course"],
+                            "semester": int.parse(_resourcesItemMap["Semester"])
+                          },
+                          // users: {},
+                        );
+                },
+                transitionsBuilder: transitionEffectForNavigator()));
       },
     );
   }

@@ -20,7 +20,8 @@ const DarkAppBarTextStyle = TextStyle(
   fontWeight: FontWeight.w700,
 );
 
-var selectedIconColor = Color(0xffff8a67); //orange
+// var selectedIconColor = Color(0xffff8a67); //orange
+var selectedIconColor = Color(0xffBB86FC);
 
 Color lightBackgroundColor = Colors.white;
 Color darkBackgroundColor = Colors.black;
@@ -35,12 +36,12 @@ Color darkModeLightTextColor = Colors.white70;
 Color lightModeLightTextColor = Colors.black54;
 
 TextStyle darkModeLightTextStyle = TextStyle(
-    color: darkModeLightTextColor ,
+    color: darkModeLightTextColor,
     fontSize: SmallTextSize,
     fontWeight: FontWeight.w500);
 
 TextStyle lightModeLightTextStyle = TextStyle(
-    color: lightModeLightTextColor ,
+    color: lightModeLightTextColor,
     fontSize: SmallTextSize,
     fontWeight: FontWeight.w500);
 
@@ -70,4 +71,7 @@ class Style {
       ));
 }
 
-//new colors
+double getDeviceWidth(context) {
+  double deviceWidth = MediaQuery.of(context).size.width;
+  return deviceWidth;
+}

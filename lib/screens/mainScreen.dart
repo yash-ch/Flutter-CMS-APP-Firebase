@@ -55,7 +55,8 @@ class _MainScreenState extends State<MainScreen> {
                         : lightModeLightTextStyle,
                   ),
                 ),
-                rectangleListViewBuilder(context, ["Resources"]),
+                rectangleListViewBuilder(
+                    context, ["Resources", "Top Banners", "Events"]),
               ],
             ),
           ),

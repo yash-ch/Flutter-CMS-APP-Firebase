@@ -138,51 +138,54 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
 
   Future<void> _loadMaterial() async {
     try {
-      if (widget.whichScreen == "Resources") {
-        _documentsList = [];
-        List documentData = await FirebaseData().materialData(
-            context,
-            "none",
-            "none",
-            widget.resources["course"],
-            widget.resources["materialType"],
-            widget.resources["subject"],
-            widget.resources["semester"],
-            "none",
-            "none");
+      switch (widget.whichScreen) {
+        case "Resources":
+          _documentsList = [];
+          List documentData = await FirebaseData().materialData(
+              context,
+              "none",
+              "none",
+              widget.resources["course"],
+              widget.resources["materialType"],
+              widget.resources["subject"],
+              widget.resources["semester"],
+              "none",
+              "none");
 
-        for (var item in documentData) {
-          _documentsList.add(item["name"]);
-          _updatedBy[item["name"]] = item["updatedBy"];
-          _updatedOn[item["name"]] = item["updatedOn"];
-        }
-        setState(() {
-          _isDocumentsLoaded = true;
-        });
-      } else if (widget.whichScreen == "Manage Users") {
-        _documentsList = [];
-        _updatedOn = {};
-
-        Map userData = await FirebaseData().allUsers();
-        for (var user in userData.keys) {
-
-          _documentsList.add(user);
-          _updatedBy[user] = userData[user]["email"];
-          if (userData[user]["isAdmin"]) {
-
-            _updatedOn[user] = "Admin,";
+          for (var item in documentData) {
+            _documentsList.add(item["name"]);
+            _updatedBy[item["name"]] = item["updatedBy"];
+            _updatedOn[item["name"]] = item["updatedOn"];
           }
-          if (userData[user]["courseAccess"]) {
-            if (_updatedOn[user] == null) {
-              _updatedOn[user] = "CourseAccess";
-            } else {
-              _updatedOn[user] = _updatedOn[user] + " CourseAccess";
+          setState(() {
+            _isDocumentsLoaded = true;
+          });
+          break;
+        case "Manage Users":
+          _documentsList = [];
+          _updatedOn = {};
+
+          Map userData = await FirebaseData().allUsers();
+          for (var user in userData.keys) {
+            _documentsList.add(user);
+            _updatedBy[user] = userData[user]["email"];//for showing email id of user that admin has updated
+
+            if (userData[user]["isAdmin"]) {
+              _updatedOn[user] = "Admin,";//for showing the access the user has
+            }
+            if (userData[user]["courseAccess"]) {
+              if (_updatedOn[user] == null) {
+                _updatedOn[user] = "CourseAccess";
+              } else {
+                _updatedOn[user] = _updatedOn[user] + " CourseAccess";
+              }
             }
           }
-        }
-        setState(() {
-          _isDocumentsLoaded = true;
-        });
+          setState(() {
+            _isDocumentsLoaded = true;
+          });
+          break;
+        case "Top Banners":
       }
     } catch (e) {}
   }
