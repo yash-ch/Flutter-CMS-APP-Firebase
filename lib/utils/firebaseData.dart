@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cmseduc/authWrapper.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_material_pickers/flutter_material_pickers.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-// import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:firebase_storage/firebase_storage.dart';
 
 class FirebaseData {
   FirebaseFirestore fireStore = FirebaseFirestore.instance;
@@ -415,6 +419,8 @@ class FirebaseData {
                         Fluttertoast.showToast(
                             msg: "$materialType was successfully updated.");
                         Navigator.of(context).pop();
+
+                        break;
                       }
                     }
                     break;
@@ -494,7 +500,6 @@ class FirebaseData {
     for (var email in users.values) {
       usersEmailList.add(email);
     }
-    print(usersEmailList);
     if (usersEmailList.contains(userEmailId) && !addOrChange) {
       Fluttertoast.showToast(
           msg: "User is already present in the database.",
@@ -520,12 +525,217 @@ class FirebaseData {
             "isAdmin": isAdmin,
             "courseAccess": courseAccess
           });
+          break;
         }
       }
     }
     Fluttertoast.showToast(
         msg: "User was successfully " + (!addOrChange ? "added." : "updated."));
     Navigator.of(context).pop();
+  }
+
+  Future<List> eventsData(String eventType) async {
+    List allTheMaterial = [];
+
+    QuerySnapshot<Map<String, dynamic>> eventData = await fireStore
+        .collection('HomePage')
+        .where("name", isEqualTo: eventType)
+        .get();
+
+    for (var event in eventData.docs) {
+      QuerySnapshot<Map<String, dynamic>> postsReference =
+          await event.reference.collection("Posts").get();
+
+      for (var post in postsReference.docs) {
+        allTheMaterial.add(post.data());
+      }
+    }
+    return allTheMaterial;
+  }
+
+  Future<void> addingEvents(context, String eventType, Map data,
+      int addOrChangeOrDelete, String previousName) async {
+    print(data);
+    //0 for add, 1 for change  and 2 delete
+    //true for add
+    List _eventsNames = [];
+    List _eventsDataList = await eventsData(eventType);
+    String _imageLink = "";
+    bool _uploadNewImage = false; // for uploading new image in change screen
+    for (var post in _eventsDataList) {
+      _eventsNames.add(post["name"]);
+    }
+    if (_eventsNames.contains(data["name"]) && addOrChangeOrDelete == 0) {
+      Fluttertoast.showToast(
+          msg: "Same name event is already present in the database.",
+          toastLength: Toast.LENGTH_LONG);
+    } else {
+      if (addOrChangeOrDelete == 0) {
+        _imageLink =
+            await _uploadImageAndReturnLink(eventType, data["name"], false);
+      } else if (addOrChangeOrDelete == 1) {
+        await showMaterialResponsiveDialog(
+            context: context,
+            title: "Event Image",
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.all(Radius.circular(20.0)),
+                        child: Image.network(
+                          data["image_link"],
+                          loadingBuilder: (BuildContext context, Widget child,
+                              ImageChunkEvent? loadingProgress) {
+                            if (loadingProgress == null) {
+                              return child;
+                            } else {
+                              return CircularProgressIndicator();
+                            }
+                          },
+                        )),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0, bottom: 16.0),
+                    child: Text("Do you want to upload new image?"),
+                  )
+                ],
+              ),
+            ),
+            confirmText: "Yes",
+            cancelText: "No",
+            onConfirmed: () {
+              _uploadNewImage = true;
+            });
+      }
+      if (_uploadNewImage) {
+        _imageLink =
+            await _uploadImageAndReturnLink(eventType, data["name"], false);
+      } else {
+        _imageLink = data["image_link"];
+      }
+      if (_imageLink == "") {
+        Fluttertoast.showToast(
+            msg: "No image was uploaded. Please Upload image to continue.");
+      } else {
+        QuerySnapshot<Map<String, dynamic>> eventData = await fireStore
+            .collection('HomePage')
+            .where("name", isEqualTo: eventType)
+            .get();
+
+        for (var event in eventData.docs) {
+          CollectionReference<Map<String, dynamic>> postsReference =
+              event.reference.collection("Posts");
+          switch (addOrChangeOrDelete) {
+            case 0:
+              if (eventType == "top_banners") {
+                postsReference.add({
+                  "name": data["name"],
+                  "image_link": _imageLink,
+                  "link": data["link"],
+                  "uploadedBy": data["uploadedBy"],
+                  "uploadedOn":
+                      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                });
+              } else {
+                postsReference.add({
+                  "name": data["name"],
+                  "image_link": _imageLink,
+                  "link": data["link"],
+                  "uploadedBy": data["uploadedBy"],
+                  "uploadedOn":
+                      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}",
+                  "event_date": data["event_date"]
+                });
+              }
+              Fluttertoast.showToast(
+                  msg: "Event was successfully added",
+                  toastLength: Toast.LENGTH_LONG);
+
+              break;
+            case 1:
+              QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
+                  await postsReference
+                      .where("name", isEqualTo: previousName)
+                      .get();
+              for (var item in docuIdSnapshot.docs) {
+                if (eventType == "top_banners") {
+                  await postsReference.doc(item.id).update({
+                    "name": data["name"],
+                    "image_link": data["image_link"],
+                    "link": data["link"],
+                    "uploadedBy": data["uploadedBy"],
+                    "uploadedOn":
+                        "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                  });
+                } else {
+                  await postsReference.doc(item.id).update({
+                    "name": data["name"],
+                    "image_link": data["image_link"],
+                    "link": data["link"],
+                    "uploadedBy": data["uploadedBy"],
+                    "uploadedOn":
+                        "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}",
+                    "event_date": data["event_date"]
+                  });
+                }
+                Fluttertoast.showToast(
+                    msg: "Event was successfully updated",
+                    toastLength: Toast.LENGTH_LONG);
+
+                break;
+              }
+              break;
+            case 2:
+              QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
+                  await postsReference
+                      .where("name", isEqualTo: previousName)
+                      .get();
+              for (var item in docuIdSnapshot.docs) {
+                await postsReference.doc(item.id).delete();
+                break;
+              }
+              break;
+            default:
+          }
+        }
+      }
+
+      Navigator.of(context).pop();
+    }
+  }
+
+  Future<String> _uploadImageAndReturnLink(
+      String whichEvent, String imageName, bool returnImageOrDoBoth) async {
+    try {
+      print(imageName);
+      //true for returning image
+      Reference reference =
+          FirebaseStorage.instance.ref().child("images/$whichEvent/$imageName");
+      if (!returnImageOrDoBoth) {
+        Fluttertoast.showToast(
+            msg: "Select file for the event.",
+            toastLength: Toast.LENGTH_SHORT);
+        ImagePicker _picker = ImagePicker();
+        // Pick an image
+        XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        File imageFile = File(image!.path);
+        Fluttertoast.showToast(
+            msg: "Please wait file is uploading. Don't exit now.",
+            toastLength: Toast.LENGTH_LONG);
+        await reference.putFile(imageFile);
+      }
+
+      String link = "";
+      link = await reference.getDownloadURL();
+      return link;
+    } catch (e) {
+      print(e);
+      Fluttertoast.showToast(
+          msg: "Something went wrong.", toastLength: Toast.LENGTH_LONG);
+      return "";
+    }
   }
 }
 

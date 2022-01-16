@@ -1,8 +1,8 @@
 import 'package:cmseduc/screens/changeScreen.dart';
+import 'package:cmseduc/screens/configureScreen.dart';
 import 'package:cmseduc/screens/settingsScreen.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
-import 'package:flutter/gestures.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/route_manager.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +15,12 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  @override
+  void initState() {
+    // FirebaseData().addingEvents("top_banners", {});
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,7 +167,9 @@ Widget roundedRectangleWidget(dynamic context, String changeItem) {
           context,
           PageRouteBuilder(
               pageBuilder: (BuildContext context, animation1, animation2) {
-                return ChangeScreen(changeItem: changeItem);
+                return (changeItem == "Top Banners" || changeItem == "Events")
+                    ? ConfigureScreen(whichScreen: changeItem, resources: {})
+                    : ChangeScreen(changeItem: changeItem);
               },
               transitionsBuilder: transitionEffectForNavigator()));
     },

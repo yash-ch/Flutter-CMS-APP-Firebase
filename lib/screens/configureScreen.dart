@@ -1,4 +1,5 @@
 import 'package:cmseduc/screens/mainScreen.dart';
+import 'package:cmseduc/screens/textFieldScreens/addOrChangeEvents.dart';
 import 'package:cmseduc/screens/textFieldScreens/addOrChangeResources.dart';
 import 'package:cmseduc/screens/textFieldScreens/manageUsers.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
@@ -28,6 +29,8 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
   Map _updatedBy = {};
   Map _updatedOn = {};
 
+  Map _eventDate = {}; //for all events
+
   @override
   void initState() {
     _loadMaterial();
@@ -36,6 +39,14 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
 
   @override
   Widget build(BuildContext context) {
+    String _pageTitle = "";
+    switch (widget.whichScreen) {
+      case "Resources":
+        _pageTitle = widget.resources["subject"];
+        break;
+      default:
+        _pageTitle = widget.whichScreen;
+    }
     return Scaffold(
         backgroundColor:
             Get.isDarkMode ? darkBackgroundColor : lightBackgroundColor,
@@ -43,9 +54,7 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
           backgroundColor:
               Get.isDarkMode ? darkBackgroundColor : lightBackgroundColor,
           title: Text(
-            widget.whichScreen == "Resources"
-                ? widget.resources["subject"]
-                : "Users",
+            _pageTitle,
             overflow: TextOverflow.ellipsis,
             style: Get.isDarkMode ? DarkAppBarTextStyle : LightAppBarTextStyle,
           ),
@@ -84,9 +93,16 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                                                   .resources["materialType"],
                                               changeMaterial: "none",
                                             )
-                                          : ManageUsers(
-                                              addOrChange: "Add",
-                                              previousUserName: "none");
+                                          : widget.whichScreen == "Manage Users"
+                                              ? ManageUsers(
+                                                  addOrChange: "Add",
+                                                  previousUserName: "none")
+                                              : AddOrChangeEvents(
+                                                  whichEvents:
+                                                      widget.whichScreen,
+                                                  addOrChange: "Add",
+                                                  changeEvent: "none",
+                                                );
                                     },
                                     transitionsBuilder:
                                         transitionEffectForNavigator()));
@@ -116,11 +132,10 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                         ),
                       ),
                     ),
-                    widget.whichScreen == "Resources"
-                        ? lightTextWidget(
-                            "Current ${widget.resources["materialType"]} List")
-                        : lightTextWidget("Current Users List"),
-                    Padding(padding: EdgeInsets.all(5.0)),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0.0, 6.0, 0.0, 16.0),
+                      child: lightTextWidget("Current $_pageTitle List"),
+                    ),
                     Expanded(
                       child: RefreshIndicator(
                           onRefresh: _loadMaterial,
@@ -152,10 +167,10 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
               "none",
               "none");
 
-          for (var item in documentData) {
-            _documentsList.add(item["name"]);
-            _updatedBy[item["name"]] = item["updatedBy"];
-            _updatedOn[item["name"]] = item["updatedOn"];
+          for (var material in documentData) {
+            _documentsList.add(material["name"]);
+            _updatedBy[material["name"]] = material["updatedBy"];
+            _updatedOn[material["name"]] = material["updatedOn"];
           }
           setState(() {
             _isDocumentsLoaded = true;
@@ -168,10 +183,11 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
           Map userData = await FirebaseData().allUsers();
           for (var user in userData.keys) {
             _documentsList.add(user);
-            _updatedBy[user] = userData[user]["email"];//for showing email id of user that admin has updated
+            _updatedBy[user] = userData[user]
+                ["email"]; //for showing email id of user that admin has updated
 
             if (userData[user]["isAdmin"]) {
-              _updatedOn[user] = "Admin,";//for showing the access the user has
+              _updatedOn[user] = "Admin,"; //for showing the access the user has
             }
             if (userData[user]["courseAccess"]) {
               if (_updatedOn[user] == null) {
@@ -186,6 +202,30 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
           });
           break;
         case "Top Banners":
+          _documentsList = [];
+          List eventsData = await FirebaseData().eventsData("top_banners");
+          for (var event in eventsData) {
+            _documentsList.add(event["name"]);
+            _updatedBy[event["name"]] = event["uploadedBy"];
+            _updatedOn[event["name"]] = event["uploadedOn"];
+          }
+          setState(() {
+            _isDocumentsLoaded = true;
+          });
+          break;
+        case "Events":
+          _documentsList = [];
+          List eventsData = await FirebaseData().eventsData("all_events");
+          for (var event in eventsData) {
+            _documentsList.add(event["name"]);
+            _updatedBy[event["name"]] = event["uploadedBy"];
+            _updatedOn[event["name"]] = event["uploadedOn"];
+            _eventDate[event["name"]] = event["event_date"];
+          }
+          setState(() {
+            _isDocumentsLoaded = true;
+          });
+          break;
       }
     } catch (e) {}
   }
@@ -238,11 +278,24 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                       title,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    widget.whichScreen == "Events"
+                        ? Text(
+                            "Event date " +
+                                _eventDate[title]
+                                    .toString()
+                                    .replaceAll(RegExp(r' '), '/'),
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                color: Get.isDarkMode
+                                    ? darkModeLightTextColor
+                                    : lightModeLightTextColor,
+                                fontSize: 12),
+                          )
+                        : Offstage(),
                     Text(
-                      widget.whichScreen == "Resources"
-                          ? "Last updated on ${_updatedOn[title]}"
-                          // : "",
-                          : "Email : ${_updatedBy[title]}", //for email
+                      widget.whichScreen == "Manage Users"
+                          ? "Email : ${_updatedBy[title]}" //for email
+                          : "Last updated on ${_updatedOn[title]}",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -251,10 +304,9 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                           fontSize: 12),
                     ),
                     Text(
-                      widget.whichScreen == "Resources"
-                          ? "By ${_updatedBy[title]}"
-                          // : "",
-                          : "Roles : ${_updatedOn[title]}",
+                      widget.whichScreen == "Manage Users"
+                          ? "Roles : ${_updatedOn[title]}"
+                          : "By ${_updatedBy[title]}",
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                           color: Get.isDarkMode
@@ -282,8 +334,14 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                           course: widget.resources["course"],
                           materialType: widget.resources["materialType"],
                           changeMaterial: title)
-                      : ManageUsers(
-                          addOrChange: "Change", previousUserName: title);
+                      : widget.whichScreen == "Manage Users"
+                          ? ManageUsers(
+                              addOrChange: "Change", previousUserName: title)
+                          : AddOrChangeEvents(
+                              whichEvents: widget.whichScreen,
+                              addOrChange: "Change",
+                              changeEvent: title,
+                            );
                 },
                 transitionsBuilder: transitionEffectForNavigator()));
       },

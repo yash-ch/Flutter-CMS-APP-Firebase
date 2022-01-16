@@ -50,8 +50,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            lightTextWidget("Update or Control"),
-            Padding(padding: EdgeInsets.all(5.0)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 16.0),
+              child: lightTextWidget("Update or Control"),
+            ),
             rectangleListViewBuilder(
                 context, ["Material Collection", "Manage Users"]),
             Center(
@@ -147,7 +149,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _materialCollectionOnTap();
             break;
           case "Manage Users":
-            _openConfigureScreen(title);
+            openConfigureScreen(context, title);
             break;
         }
       },
@@ -184,20 +186,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
   }
 
-  void _openConfigureScreen(String screenName) {
-    //for Manage users
-    Navigator.push(
-        context,
-        PageRouteBuilder(
-            pageBuilder: (BuildContext context, animation1, animation2) {
-          return ConfigureScreen(
-            whichScreen: screenName,
-            resources: {},
-            // users: {},
-          );
-        }, transitionsBuilder: transitionEffectForNavigator()));
-  }
-
   void approveMaterialCollection(
       String courseName, bool deleteNone, bool updateSubject) async {
     setState(() {
@@ -216,4 +204,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       isProcessComplete = false;
     });
   }
+}
+
+void openConfigureScreen(context, String screenName) {
+  //for Manage users
+  Navigator.push(
+      context,
+      PageRouteBuilder(
+          pageBuilder: (BuildContext context, animation1, animation2) {
+            return ConfigureScreen(
+              whichScreen: screenName,
+              resources: {},
+              // users: {},
+            );
+          },
+          transitionsBuilder: transitionEffectForNavigator()));
 }

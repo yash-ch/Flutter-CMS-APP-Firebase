@@ -1,4 +1,3 @@
-import 'package:cmseduc/screens/mainScreen.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
 import 'package:cmseduc/utils/style.dart';
 import 'package:flutter/material.dart';
@@ -63,26 +62,26 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        lightTextWidget(
-            "Name of the ${(widget.materialType).substring(0, (widget.materialType).length - 1)}"),
+        // lightTextWidget(
+        //     "Name of the ${(widget.materialType).substring(0, (widget.materialType).length - 1)}"),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 20.0, 20.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
           child: TextField(
             controller: _titleOfTheMaterial,
             decoration: InputDecoration(
               labelText:
-                  "${(widget.materialType).substring(0, (widget.materialType).length - 1)} Name",
+                  "Enter ${(widget.materialType).substring(0, (widget.materialType).length - 1)} Name",
             ),
           ),
         ),
-        lightTextWidget("Link"),
+        // lightTextWidget("Link"),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 20.0, 20.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
           child: TextField(
             controller: _linkOfTheMaterial,
             decoration: InputDecoration(
               labelText:
-                  "${(widget.materialType).substring(0, (widget.materialType).length - 1)} Google Drive Link",
+                  "Enter ${(widget.materialType).substring(0, (widget.materialType).length - 1)} Google Drive Link",
             ),
           ),
         ),
@@ -92,7 +91,7 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(primary: selectedIconColor),
                 onPressed: () {
-                  if (_titleOfTheMaterial.text.trim() != "" &&
+                  if (_titleOfTheMaterial.text.trim() != "" ||
                       _linkOfTheMaterial.text.trim() != "") {
                     FirebaseData().materialData(
                         context,

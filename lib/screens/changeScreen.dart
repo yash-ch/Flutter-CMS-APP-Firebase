@@ -118,8 +118,10 @@ class _ChangeScreenState extends State<ChangeScreen> {
               ),
             ),
           ),
-          lightTextWidget("Current Courses List"),
-          Padding(padding: EdgeInsets.all(5.0)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0.0, 6.0, 0.0, 16.0),
+            child: lightTextWidget("Current Courses List"),
+          ),
           Expanded(
             child: RefreshIndicator(
                 onRefresh: _loadInitialData,
@@ -227,18 +229,22 @@ class _ChangeScreenState extends State<ChangeScreen> {
 
   Future<void> _loadInitialData() async {
     try {
-      if (widget.changeItem == "Courses" && widget.changeItem == "Resources") {
-        _courseList = await FirebaseData().courses();
-        _materialList = await FirebaseData().materialType();
-
-        if (widget.changeItem == "Courses") {
+      switch (widget.changeItem) {
+        case "Courses":
+          _courseList = await FirebaseData().courses();
+          _materialList = await FirebaseData().materialType();
           for (var course in _courseList) {
             _uploadedAtAndBy[course] =
                 await FirebaseData().uploadByAndAt(course);
           }
-        }
-      } else if (widget.changeItem == "Top Banners") {
-      } else if (widget.changeItem == "Events") {}
+          break;
+        case "Resources":
+          _courseList = await FirebaseData().courses();
+          _materialList = await FirebaseData().materialType();
+          break;
+        case "Top Banners":
+        case "Events":
+      }
       setState(() {
         _isLoading = false;
       });
