@@ -1,21 +1,17 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cmseduc/authWrapper.dart';
+import 'package:cmseduc/utils/style.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_material_pickers/flutter_material_pickers.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/route_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class FirebaseData {
   FirebaseFirestore fireStore = FirebaseFirestore.instance;
-  // firebase_storage.FirebaseStorage storage =
-  //     firebase_storage.FirebaseStorage.instance;
-
-  // firebase_storage.Reference ref =
-  //     firebase_storage.FirebaseStorage.instance.ref();
   Future<List> courses() async {
     List nameOfTheCourses = [];
     QuerySnapshot<Map<String, dynamic>> data = await fireStore
@@ -27,13 +23,6 @@ class FirebaseData {
     }
     return nameOfTheCourses;
   }
-
-  // Future<String> svgLink(String imageName) async {
-  //   String link = "";
-  //   // print(imageName);
-  //   link = await ref.child('svg/$imageName.svg').getDownloadURL();
-  //   return link;
-  // }
 
   Future<List> materialType() async {
     List materialTypeList = [];
@@ -247,8 +236,7 @@ class FirebaseData {
         );
   }
 
-  Future<void> updateCoursesSubject(
-      String courseName, bool materialOrNot, bool deleteNone) async {
+  Future<void> updateCoursesSubject(String courseName) async {
     List materialTypeList = await materialType();
     QuerySnapshot<Map<String, dynamic>> materialTypedata =
         await fireStore.collection('MaterialType').get();
@@ -277,46 +265,36 @@ class FirebaseData {
                   List subjectPresentList = [];
                   for (var subject in subjectReference.docs) {
                     subjectPresentList.add(subject.data()["name"]);
-
-                    if (materialOrNot) {
-                      final subjectData =
-                          await collectionReference("material", subject);
-                      await subjectData.add(
-                        CreateCollection(name: 'none'),
-                      );
+                    print("processing");
+                    if (subject.data()["name"] == "none") {
+                      await course.reference
+                          .collection("subject")
+                          .doc(subject.id)
+                          .delete();
                     }
+                    QuerySnapshot<Map<String, dynamic>> materialReference =
+                        await subject.reference.collection("material").get();
 
-                    if (deleteNone) {
-                      //for deleting "none" that I stored just for the reference
-                      print("processing");
-                      if (subject.data()["name"] == "none") {
-                        await course.reference
-                            .collection("subject")
-                            .doc(subject.id)
+                    for (var materialItem in materialReference.docs) {
+                      if (materialItem.data()["name"] == "none") {
+                        await subject.reference
+                            .collection("material")
+                            .doc(materialItem.id)
                             .delete();
                       }
-                      QuerySnapshot<Map<String, dynamic>> materialReference =
-                          await subject.reference.collection("material").get();
+                    }
 
-                      for (var materialItem in materialReference.docs) {
-                        if (materialItem.data()["name"] == "none") {
-                          await subject.reference
-                              .collection("material")
-                              .doc(materialItem.id)
-                              .delete();
-                        }
-                      }
-                    } //deleteNone ended
+                    final subjectData =
+                        await collectionReference("material", subject);
+                    await subjectData.add(
+                      CreateCollection(name: 'none'),
+                    );
                   }
-                  if (!materialOrNot) {
-                    //if the subjects are present or not. if not present then updating the subjects
-                    print(subjectPresentList);
-                    for (var item in subjectsOfCourseList) {
-                      if (!subjectPresentList.contains(item)) {
-                        await course.reference
-                            .collection("subject")
-                            .add({"name": item});
-                      }
+                  for (var item in subjectsOfCourseList) {
+                    if (!subjectPresentList.contains(item)) {
+                      await course.reference
+                          .collection("subject")
+                          .add({"name": item});
                     }
                   }
                 }
@@ -331,7 +309,7 @@ class FirebaseData {
   //true for add and false for update
   Future<List> materialData(
       context,
-      String addOrChangeOrNone,
+      String addOrChangeOrDelete,
       String changeMaterialName,
       String courseName,
       String materialType,
@@ -366,7 +344,7 @@ class FirebaseData {
                       // .orderBy("updatedOn")
                       .get();
               for (var materialItem in materialReference.docs) {
-                switch (addOrChangeOrNone) {
+                switch (addOrChangeOrDelete) {
                   case "none":
                     if (materialItem["name"] != "none") {
                       allTheMaterial.add(materialItem.data());
@@ -454,6 +432,179 @@ class FirebaseData {
     }
     // print(allTheMaterial);
     return allTheMaterial;
+  }
+
+  Future<List> aeccGESubjects(int sem, String aeccOrGE) async {
+    List subjectList = [];
+    //for returning AECC or GE subjects
+    QuerySnapshot<Map<String, dynamic>> materialTypedata = await fireStore
+        .collection('MaterialType')
+        .where("name", isEqualTo: "Timetable")
+        .get();
+    try {
+      for (var materialType in materialTypedata.docs) {
+        QuerySnapshot<Map<String, dynamic>> semesterReference =
+            await navigateIntoCollection(materialType, "semester", "sem$sem");
+        for (var semester in semesterReference.docs) {
+          QuerySnapshot<Map<String, dynamic>> subjectReference =
+              await semester.reference.collection(aeccOrGE).get();
+          for (var subject in subjectReference.docs) {
+            if (subject["name"] != "none") {
+              subjectList.add(subject["name"]);
+            }
+          }
+        }
+      }
+    } on FirebaseException catch (e) {
+      print(e.message);
+    }
+    return subjectList;
+  }
+
+  Future<void> manageAeccOrGESubjects(int sem, String aeccOrGE,
+      String subjectName, int addOrChangeOrDelete, String previousName) async {
+    //0 for add , 1 for change, 2 for delete
+    QuerySnapshot<Map<String, dynamic>> materialTypedata =
+        await fireStore.collection('MaterialType').get();
+    try {
+      for (var material in materialTypedata.docs) {
+        QuerySnapshot<Map<String, dynamic>> semesterReference =
+            await navigateIntoCollection(material, "semester", "sem$sem");
+        for (var semester in semesterReference.docs) {
+          if (addOrChangeOrDelete == 0) {
+            await semester.reference
+                .collection(aeccOrGE)
+                .add({"name": subjectName});
+            QuerySnapshot<Map<String, dynamic>> aeccOrGeReference =
+                await semester.reference
+                    .collection(aeccOrGE)
+                    .where(subjectName)
+                    .get();
+            for (var materialItem in aeccOrGeReference.docs) {
+              if (materialItem["name"] == subjectName) {
+                final semData = collectionReference("material", materialItem);
+                await semData.add(
+                  CreateCollection(name: "none"),
+                );
+              }
+            }
+          } else {
+            QuerySnapshot<Map<String, dynamic>> subjectReference =
+                await navigateIntoCollection(semester, aeccOrGE, previousName);
+            for (var subject in subjectReference.docs) {
+              if (addOrChangeOrDelete == 1) {
+                await semester.reference
+                    .collection(aeccOrGE)
+                    .doc(subject.id)
+                    .update({"name": subjectName});
+              } else if (addOrChangeOrDelete == 2) {
+                await semester.reference
+                    .collection(aeccOrGE)
+                    .doc(subject.id)
+                    .delete();
+              }
+            }
+          }
+        }
+      }
+    } on FirebaseException catch (e) {
+      print(e.message);
+    }
+  }
+
+  Future<List> aeccOrGEData(
+      context,
+      int sem,
+      String aeccOrGE,
+      String materialType,
+      String subjectName,
+      int addOrChangeOrDelete,
+      String changeMaterial, //0 - return data, 1- data, 2-change, 3-delete
+      Map<String, dynamic> dataMap) async {
+    List materialList = [];
+    List nameList = [];
+    QuerySnapshot<Map<String, dynamic>> materialTypedata = await fireStore
+        .collection('MaterialType')
+        .where("name", isEqualTo: materialType)
+        .get();
+
+    try {
+      for (var material in materialTypedata.docs) {
+        QuerySnapshot<Map<String, dynamic>> semesterReference =
+            await navigateIntoCollection(material, "semester", "sem$sem");
+        for (var semester in semesterReference.docs) {
+          QuerySnapshot<Map<String, dynamic>> subjectReference =
+              await navigateIntoCollection(semester, aeccOrGE, subjectName);
+          for (var subject in subjectReference.docs) {
+            QuerySnapshot<Map<String, dynamic>> materialReference =
+                await subject.reference.collection("material").get();
+            for (var material in materialReference.docs) {
+              if (material["name"] != "none") {
+                nameList.add(material["name"]);
+              }
+            }
+            if (addOrChangeOrDelete == 1) {
+              if (nameList.contains(dataMap["name"])) {
+                Fluttertoast.showToast(
+                    msg: "$materialType is already present in the database.");
+              } else {
+                //add
+                await subject.reference.collection("material").add({
+                  "link": dataMap["link"],
+                  "name": dataMap["name"],
+                  "updatedBy": userEmail,
+                  "updatedOn":
+                      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                });
+                Fluttertoast.showToast(
+                    msg: "$materialType was successfully uploaded.");
+                Navigator.of(context).pop();
+              }
+            } else if (addOrChangeOrDelete == 0) {
+              QuerySnapshot<Map<String, dynamic>> materialReference =
+                  await subject.reference.collection("material").get();
+              for (var material in materialReference.docs) {
+                if (material["name"] != "none") {
+                  materialList.add(material.data());
+                }
+              }
+            } else {
+              QuerySnapshot<Map<String, dynamic>> materialReference =
+                  await navigateIntoCollection(
+                      subject, "material", changeMaterial);
+
+              for (var material in materialReference.docs) {
+                switch (addOrChangeOrDelete) {
+                  case 2:
+                    await subject.reference
+                        .collection("material")
+                        .doc(material.id)
+                        .update(dataMap);
+                    Fluttertoast.showToast(
+                        msg: "$materialType was successfully updated.");
+                    Navigator.of(context).pop();
+
+                    break;
+                  case 3:
+                    await subject.reference
+                        .collection("material")
+                        .doc(material.id)
+                        .delete();
+                    Fluttertoast.showToast(
+                        msg: "$materialType was successfully deleted.");
+                    Navigator.of(context).pop();
+                    break;
+                }
+                break;
+              }
+            }
+          }
+        }
+      }
+    } on FirebaseException catch (e) {
+      print(e.message);
+    }
+    return materialList;
   }
 
   Future<Map> allUsers() async {
@@ -553,7 +704,7 @@ class FirebaseData {
     return allTheMaterial;
   }
 
-  Future<void> addingEvents(context, String eventType, Map data,
+  Future<void> managingEvents(context, String eventType, Map data,
       int addOrChangeOrDelete, String previousName) async {
     print(data);
     //0 for add, 1 for change  and 2 delete
@@ -577,6 +728,7 @@ class FirebaseData {
         await showMaterialResponsiveDialog(
             context: context,
             title: "Event Image",
+            headerColor: Get.isDarkMode ? Colors.black45 : selectedIconColor,
             child: SingleChildScrollView(
               child: Column(
                 children: [
@@ -598,7 +750,7 @@ class FirebaseData {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 16.0, bottom: 16.0),
-                    child: Text("Do you want to upload new image?"),
+                    child: Text("Do you want to upload a new image?"),
                   )
                 ],
               ),
@@ -608,14 +760,16 @@ class FirebaseData {
             onConfirmed: () {
               _uploadNewImage = true;
             });
+        if (_uploadNewImage) {
+          _imageLink =
+              await _uploadImageAndReturnLink(eventType, data["name"], false);
+        } else {
+          _imageLink = data["image_link"];
+        }
       }
-      if (_uploadNewImage) {
-        _imageLink =
-            await _uploadImageAndReturnLink(eventType, data["name"], false);
-      } else {
-        _imageLink = data["image_link"];
-      }
-      if (_imageLink == "") {
+
+      if (_imageLink == "" &&
+          (addOrChangeOrDelete == 0 || addOrChangeOrDelete == 1)) {
         Fluttertoast.showToast(
             msg: "No image was uploaded. Please Upload image to continue.");
       } else {
@@ -650,7 +804,7 @@ class FirebaseData {
                 });
               }
               Fluttertoast.showToast(
-                  msg: "Event was successfully added",
+                  msg: "Event was successfully added.",
                   toastLength: Toast.LENGTH_LONG);
 
               break;
@@ -681,23 +835,25 @@ class FirebaseData {
                   });
                 }
                 Fluttertoast.showToast(
-                    msg: "Event was successfully updated",
+                    msg: "Event was successfully updated.",
                     toastLength: Toast.LENGTH_LONG);
-
                 break;
               }
               break;
-            case 2:
+            case 2: //for deleting event
               QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
                   await postsReference
                       .where("name", isEqualTo: previousName)
                       .get();
               for (var item in docuIdSnapshot.docs) {
+                await _deleteImage("images/$eventType/$previousName");
                 await postsReference.doc(item.id).delete();
+                Fluttertoast.showToast(
+                    msg: "Event was successfully deleted.",
+                    toastLength: Toast.LENGTH_LONG);
                 break;
               }
               break;
-            default:
           }
         }
       }
@@ -715,15 +871,14 @@ class FirebaseData {
           FirebaseStorage.instance.ref().child("images/$whichEvent/$imageName");
       if (!returnImageOrDoBoth) {
         Fluttertoast.showToast(
-            msg: "Select file for the event.",
-            toastLength: Toast.LENGTH_SHORT);
+            msg: "Select file for the event.", toastLength: Toast.LENGTH_LONG);
         ImagePicker _picker = ImagePicker();
         // Pick an image
         XFile? image = await _picker.pickImage(source: ImageSource.gallery);
         File imageFile = File(image!.path);
         Fluttertoast.showToast(
             msg: "Please wait file is uploading. Don't exit now.",
-            toastLength: Toast.LENGTH_LONG);
+            toastLength: Toast.LENGTH_SHORT);
         await reference.putFile(imageFile);
       }
 
@@ -735,6 +890,19 @@ class FirebaseData {
       Fluttertoast.showToast(
           msg: "Something went wrong.", toastLength: Toast.LENGTH_LONG);
       return "";
+    }
+  }
+
+  Future<void> _deleteImage(String imageLocation) async {
+    try {
+      Fluttertoast.showToast(
+          msg: "Please wait file is deleting. Don't exit now.",
+          toastLength: Toast.LENGTH_SHORT);
+      Reference reference = FirebaseStorage.instance.ref().child(imageLocation);
+      await reference.delete();
+    } catch (e) {
+      Fluttertoast.showToast(
+          msg: "Something went wrong.", toastLength: Toast.LENGTH_SHORT);
     }
   }
 }

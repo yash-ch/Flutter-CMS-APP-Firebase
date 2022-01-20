@@ -44,7 +44,7 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
         backgroundColor:
             Get.isDarkMode ? darkBackgroundColor : lightBackgroundColor,
         title: Text(
-          widget.whichEvents,
+          widget.addOrChange + " " + widget.whichEvents,
           style: Get.isDarkMode ? DarkAppBarTextStyle : LightAppBarTextStyle,
         ),
         leading: IconButton(
@@ -96,11 +96,15 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
               ? Column(
                   children: [
                     InkWell(
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
                       onTap: () {
                         showMaterialDatePicker(
                             context: context,
                             title: "Select Event Date",
                             maxLongSide: 500,
+                            headerColor: Get.isDarkMode
+                                ? Colors.black45
+                                : selectedIconColor,
                             firstDate: DateTime.now(),
                             lastDate: DateTime.now().add(Duration(days: 90)),
                             selectedDate: DateTime.now(),
@@ -125,15 +129,17 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
+                      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
                       child: Text(
-                        _dateOfTheEvent + _dateOfTheEvent,
+                        _dateOfTheEvent == ""
+                            ? "Select a dateSelect a date"
+                            : _dateOfTheEvent + _dateOfTheEvent,
                         style: TextStyle(
                           fontSize: 7,
                           color: Colors.transparent,
                           decoration: TextDecoration.underline,
                           decorationColor:
-                              Get.isDarkMode ? Colors.white38 : Colors.black38,
+                              Get.isDarkMode ? Colors.white30 : Colors.black26,
                           decorationThickness: 4,
                         ),
                       ),
@@ -141,6 +147,18 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                   ],
                 )
               : Offstage(),
+          Container(
+              width: double.maxFinite,
+              height: 10.0,
+              child: Text("- - - - " * 15)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 0, 8.0),
+            child: Text(
+              "Please upload 4x4 size images only. " +
+                  (widget.addOrChange == "Change" ? "Update" : "Upload") +
+                  " screen will come after you press the upload button.",
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: Center(
@@ -154,6 +172,7 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                       : Text("UPLOAD")),
             ),
           ),
+
           widget.addOrChange == "Change"
               ? Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -165,14 +184,27 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                           showMaterialResponsiveDialog(
                             context: context,
                             title: "Are You Sure?",
-                            backgroundColor: selectedIconColor,
+                            maxLongSide: 340.0,
+                            headerColor: Get.isDarkMode
+                                ? Colors.black45
+                                : selectedIconColor,
                             child: Padding(
-                              padding: const EdgeInsets.only(top: 10.0),
+                              padding: const EdgeInsets.all(16.0),
                               child: Text(
                                 "Are you sure you want to delete \"${widget.changeEvent}\"? You won't be able to restore it.",
                                 style: TextStyle(fontSize: SmallTextSize),
                               ),
                             ),
+                            onConfirmed: () {
+                              FirebaseData().managingEvents(
+                                  context,
+                                  widget.whichEvents == "Top Banners"
+                                      ? "top_banners"
+                                      : "all_events",
+                                  {},
+                                  2,
+                                  widget.changeEvent);
+                            },
                           );
                         },
                         child: Text("DELETE")),
@@ -187,23 +219,31 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
   Future<void> _uploadOrUpdatedEvent() async {
     if (_nameOfTheEvent.text.trim() != "") {
       try {
-        // final _websiteLinkValidity =
+        if (_websiteLinkOfTheEvent.text.trim().contains(
+                "http://") || //for adding https if the doesn't have it
+            _websiteLinkOfTheEvent.text.trim().contains("https://")) {
+        } else {
+          _websiteLinkOfTheEvent.text =
+              "https://" + _websiteLinkOfTheEvent.text.trim();
+        }
+
         await http.get(Uri.parse(_websiteLinkOfTheEvent.text.trim()));
 
         if (widget.whichEvents == "Top Banners") {
-          FirebaseData().addingEvents(
+          FirebaseData().managingEvents(
               context,
               "top_banners",
               {
                 "name": _nameOfTheEvent.text.trim(),
                 "link": _websiteLinkOfTheEvent.text.trim(),
+                "image_link": _imageLinkOfTheEvent,
                 "uploadedBy": userEmail,
               },
               widget.addOrChange == "Add" ? 0 : 1,
               widget.changeEvent);
         } else {
           if (_dateOfTheEvent != "") {
-            FirebaseData().addingEvents(
+            FirebaseData().managingEvents(
                 context,
                 "all_events",
                 {
@@ -257,7 +297,6 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
               _websiteLinkOfTheEvent.text = event["link"];
               _nameOfTheEvent.text = event["name"];
               _dateOfTheEvent = event["event_date"];
-              print(_dateOfTheEvent);
               setState(() {});
             }
           }

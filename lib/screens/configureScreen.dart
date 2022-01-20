@@ -44,6 +44,9 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
       case "Resources":
         _pageTitle = widget.resources["subject"];
         break;
+      case "AECC&GE":
+        _pageTitle = widget.resources["subject"];
+        break;
       default:
         _pageTitle = widget.whichScreen;
     }
@@ -74,21 +77,25 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.all(Radius.circular(20.0)),
                         child: InkWell(
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
                           onTap: () {
                             Navigator.push(
                                 context,
                                 PageRouteBuilder(
                                     pageBuilder: (BuildContext context,
                                         animation1, animation2) {
-                                      return widget.whichScreen == "Resources"
+                                      return (widget.whichScreen ==
+                                                  "Resources" ||
+                                              widget.whichScreen == "AECC&GE")
                                           ? AddOrChangeResources(
+                                              whichScreen: widget.whichScreen,
                                               addOrChange: "Add",
                                               semester:
                                                   widget.resources["semester"],
                                               subject:
                                                   widget.resources["subject"],
                                               course:
-                                                  widget.resources["course"],
+                                                  widget.resources["aeccOrGE"],
                                               materialType: widget
                                                   .resources["materialType"],
                                               changeMaterial: "none",
@@ -226,8 +233,26 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
             _isDocumentsLoaded = true;
           });
           break;
+        case "AECC&GE":
+          _documentsList = [];
+          List aeccGEData = await FirebaseData().aeccOrGEData(context,
+              widget.resources["semester"],
+              widget.resources["aeccOrGE"],
+              widget.resources["materialType"],
+              widget.resources["subject"],
+              0, "none",{});
+          for (var material in aeccGEData) {
+            _documentsList.add(material["name"]);
+            _updatedBy[material["name"]] = material["updatedBy"];
+            _updatedOn[material["name"]] = material["updatedOn"];
+          }
+          setState(() {
+            _isDocumentsLoaded = true;
+          });
       }
-    } catch (e) {}
+    } catch (e) {
+      print(e);
+    }
   }
 
   Widget _fullWidthListViewBuilder(dynamic context, List namesList) {
@@ -251,7 +276,7 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
   Widget _fullWidthRoundedRectangleWidget(dynamic context, String title) {
     // double widthOfBox = ((MediaQuery.of(context).size.width));
     return InkWell(
-      focusColor: Colors.transparent,
+      borderRadius: BorderRadius.all(Radius.circular(20)),
       child: ClipRRect(
         borderRadius: BorderRadius.all(Radius.circular(20)),
         child: Container(
@@ -326,12 +351,13 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
             context,
             PageRouteBuilder(
                 pageBuilder: (BuildContext context, animation1, animation2) {
-                  return widget.whichScreen == "Resources"
+                  return (widget.whichScreen == "Resources" ||widget.whichScreen == "AECC&GE")
                       ? AddOrChangeResources(
+                          whichScreen: widget.whichScreen,
                           addOrChange: "Change",
                           semester: widget.resources["semester"],
                           subject: widget.resources["subject"],
-                          course: widget.resources["course"],
+                          course: widget.resources["aeccOrGE"],
                           materialType: widget.resources["materialType"],
                           changeMaterial: title)
                       : widget.whichScreen == "Manage Users"

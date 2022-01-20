@@ -77,6 +77,13 @@ class AddOrChangeCourseState extends State<AddOrChangeCourse> {
           _subjectsListViewBuilder(5, allSemSubMapsList[4]),
           _subjectsListViewBuilder(6, allSemSubMapsList[5]),
           Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            child: Container(
+                width: double.maxFinite,
+                height: 10.0,
+                child: Text("- - - - " * 15)),
+          ),
+          Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 16.0, 0, 0.0),
             child: Text(
               (widget.addOrChange == "Change" ? "Update" : "Upload") +
@@ -120,6 +127,7 @@ class AddOrChangeCourseState extends State<AddOrChangeCourse> {
                       itemCount: subjectMap.length,
                       itemBuilder: (BuildContext context, int index) {
                         return InkWell(
+                          borderRadius: BorderRadius.all(Radius.circular(20)),
                           onTap: () {
                             _addOrChangeSubject(
                                 semester, subjectMap, false, index + 1);
@@ -193,7 +201,7 @@ class AddOrChangeCourseState extends State<AddOrChangeCourse> {
         context: context,
         title:
             addOrChange ? "Add Subject $subjectNo" : "Add Subject $subjectNo",
-        headerColor: selectedIconColor,
+        headerColor: Get.isDarkMode ? Colors.black45 : selectedIconColor,
         maxLongSide: 340.0,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/route_manager.dart';
 
 class AddOrChangeResources extends StatefulWidget {
+  final String whichScreen;
   final String addOrChange;
   final String course;
   final String subject;
@@ -14,6 +15,7 @@ class AddOrChangeResources extends StatefulWidget {
   final String changeMaterial;
   const AddOrChangeResources(
       {Key? key,
+      required this.whichScreen,
       required this.addOrChange,
       required this.subject,
       required this.course,
@@ -45,7 +47,10 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
         backgroundColor:
             Get.isDarkMode ? darkBackgroundColor : lightBackgroundColor,
         title: Text(
-          widget.subject,
+          (widget.addOrChange == "Add" ? "Add " : "Change ") +
+              widget.materialType
+                  .toString()
+                  .substring(0, widget.materialType.toString().length - 1),
           style: Get.isDarkMode ? DarkAppBarTextStyle : LightAppBarTextStyle,
         ),
         leading: IconButton(
@@ -54,11 +59,11 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: addOrChangeCourseWidget(),
+      body: addOrChangeResourceWidget(),
     );
   }
 
-  Widget addOrChangeCourseWidget() {
+  Widget addOrChangeResourceWidget() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -85,28 +90,46 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
             ),
           ),
         ),
+        Container(
+            width: double.maxFinite,
+            height: 10.0,
+            child: Text("- - - - " * 15)),
         Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(16.0),
           child: Center(
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(primary: selectedIconColor),
                 onPressed: () {
-                  if (_titleOfTheMaterial.text.trim() != "" ||
-                      _linkOfTheMaterial.text.trim() != "") {
-                    FirebaseData().materialData(
-                        context,
-                        widget.addOrChange,
-                        widget.changeMaterial,
-                        widget.course,
-                        widget.materialType,
-                        widget.subject,
-                        widget.semester,
-                        _titleOfTheMaterial.text.trim(),
-                        _linkOfTheMaterial.text.trim());
-                  } else {
+                  if (_titleOfTheMaterial.text.trim() == "" ||
+                      _linkOfTheMaterial.text.trim() == "") {
                     Fluttertoast.showToast(
                         msg: "Material name and email can't be left blank.",
                         toastLength: Toast.LENGTH_LONG);
+                  } else {
+                    if (widget.whichScreen == "Resources") {
+                      FirebaseData().materialData(
+                          context,
+                          widget.addOrChange,
+                          widget.changeMaterial,
+                          widget.course,
+                          widget.materialType,
+                          widget.subject,
+                          widget.semester,
+                          _titleOfTheMaterial.text.trim(),
+                          _linkOfTheMaterial.text.trim());
+                    } else {
+                      FirebaseData().aeccOrGEData(
+                          context,
+                          widget.semester,
+                          widget.course,
+                          widget.materialType,
+                          widget.subject,
+                          widget.addOrChange == "Add" ? 1 : 2,
+                          widget.changeMaterial, {
+                        "name": _titleOfTheMaterial.text.trim(),
+                        "link": _linkOfTheMaterial.text.trim()
+                      });
+                    }
                   }
                 },
                 child: widget.addOrChange == "Change"
@@ -121,6 +144,9 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
                   child: ElevatedButton(
                       onPressed: () {
                         showMaterialResponsiveDialog(
+                            headerColor: Get.isDarkMode
+                                ? Colors.black45
+                                : selectedIconColor,
                             context: context,
                             title: "Are you sure?",
                             child: Padding(
@@ -129,104 +155,38 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.only(bottom: 5.0),
-                                    child: RichText(
-                                        text: TextSpan(
-                                            children: <TextSpan>[
-                                          TextSpan(
-                                              text: widget.course,
-                                              style: TextStyle(
-                                                  color: Get.isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black,
-                                                  fontSize: SmallTextSize))
-                                        ],
-                                            text: "Course : ",
-                                            style: TextStyle(
-                                                color: selectedIconColor,
-                                                fontSize: SmallTextSize))),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 5.0),
-                                    child: RichText(
-                                        text: TextSpan(
-                                            children: <TextSpan>[
-                                          TextSpan(
-                                              text:
-                                                  (widget.semester).toString(),
-                                              style: TextStyle(
-                                                  color: Get.isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black,
-                                                  fontSize: SmallTextSize))
-                                        ],
-                                            text: "Semester : ",
-                                            style: TextStyle(
-                                                color: selectedIconColor,
-                                                fontSize: SmallTextSize))),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 5.0),
-                                    child: RichText(
-                                      text: TextSpan(
-                                          children: <TextSpan>[
-                                            TextSpan(
-                                                text: widget.materialType,
-                                                style: TextStyle(
-                                                    color: Get.isDarkMode
-                                                        ? Colors.white
-                                                        : Colors.black,
-                                                    fontSize: SmallTextSize))
-                                          ],
-                                          text: "Material Type : ",
-                                          style: TextStyle(
-                                              color: selectedIconColor,
-                                              fontSize: SmallTextSize)),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 5.0),
-                                    child: RichText(
-                                        text: TextSpan(
-                                            children: <TextSpan>[
-                                          TextSpan(
-                                              text: widget.subject,
-                                              style: TextStyle(
-                                                  color: Get.isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black,
-                                                  fontSize: SmallTextSize))
-                                        ],
-                                            text: "Subject : ",
-                                            style: TextStyle(
-                                                color: selectedIconColor,
-                                                fontSize: SmallTextSize))),
-                                  ),
-
-                                  Padding(
                                     padding: const EdgeInsets.only(top: 10.0),
                                     child: Text(
                                       "Are you sure you want to delete \"${widget.changeMaterial}\"? You won't be able to restore it.",
                                       style: TextStyle(fontSize: SmallTextSize),
                                     ),
                                   ),
-
-                                  // Text(widget.changeMaterial),
                                 ],
                               ),
                             ),
                             maxLongSide: 340,
                             onConfirmed: () {
-                              FirebaseData().materialData(
-                                  context,
-                                  "Delete",
-                                  widget.changeMaterial,
-                                  widget.course,
-                                  widget.materialType,
-                                  widget.subject,
-                                  widget.semester,
-                                  "",
-                                  "");
+                              if (widget.whichScreen == "Resources") {
+                                FirebaseData().materialData(
+                                    context,
+                                    "Delete",
+                                    widget.changeMaterial,
+                                    widget.course,
+                                    widget.materialType,
+                                    widget.subject,
+                                    widget.semester,
+                                    "",
+                                    "");
+                              } else {
+                                FirebaseData().aeccOrGEData(
+                                    context,
+                                    widget.semester,
+                                    widget.course,
+                                    widget.materialType,
+                                    widget.subject,
+                                    3,
+                                    widget.changeMaterial, {});
+                              }
                             });
                       },
                       style:
@@ -242,24 +202,43 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
   Future<void> _prefillTextField() async {
     try {
       if (widget.addOrChange == "Change") {
-        List materialMap = await FirebaseData().materialData(
-            context,
-            "none",
-            "none",
-            widget.course,
-            widget.materialType,
-            widget.subject,
-            widget.semester,
-            "none",
-            "none");
+        if (widget.whichScreen == "Resources") {
+          List materialMap = await FirebaseData().materialData(
+              context,
+              "none",
+              "none",
+              widget.course,
+              widget.materialType,
+              widget.subject,
+              widget.semester,
+              "none",
+              "none");
 
-        for (var material in materialMap) {
-          if (material["name"] == widget.changeMaterial) {
-            _titleOfTheMaterial.text = material["name"];
-            _linkOfTheMaterial.text = material["link"];
+          for (var material in materialMap) {
+            if (material["name"] == widget.changeMaterial) {
+              _titleOfTheMaterial.text = material["name"];
+              _linkOfTheMaterial.text = material["link"];
+            }
+          }
+        } else {
+          List materialMap = await FirebaseData().aeccOrGEData(
+              context,
+              widget.semester,
+              widget.course,
+              widget.materialType,
+              widget.subject,
+              0,
+              widget.changeMaterial, {});
+          for (var material in materialMap) {
+            if (material["name"] == widget.changeMaterial) {
+              _titleOfTheMaterial.text = material["name"];
+              _linkOfTheMaterial.text = material["link"];
+            }
           }
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      print(e);
+    }
   }
 }

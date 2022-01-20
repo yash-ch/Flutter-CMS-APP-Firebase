@@ -19,6 +19,8 @@ List courseList = [];
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
+    // FirebaseData().addingGEAndAecc("Books");
+    // FirebaseData().manageGEorAeccSubjects(1,"GE","none", false, "EVS");
     loadData();
     super.initState();
   }
@@ -116,6 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget roundedRectangleWidget(dynamic context, String title) {
     double widthOfBox = ((MediaQuery.of(context).size.width) / 2) - 30;
     return InkWell(
+      borderRadius: BorderRadius.all(Radius.circular(20)),
       child: ClipRRect(
         borderRadius: BorderRadius.all(Radius.circular(20)),
         child: Container(
@@ -161,6 +164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showMaterialRadioPicker(
         title: "Select Course",
         context: context,
+        headerColor: Get.isDarkMode ? Colors.black45 : selectedIconColor,
         items: courseList,
         onChanged: (value) {
           setState(() {
@@ -168,36 +172,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           });
         },
         onConfirmed: () {
-          showMaterialRadioPicker(
-            maxLongSide: 320.0,
-            context: context,
-            items: ["Update Subjects", "Delete none", "Do Both"],
-            title: "Options",
-            onChanged: (value) {
-              if (value == "Update Subjects") {
-                approveMaterialCollection(course, false, true);
-              } else if (value == "Delete none") {
-                approveMaterialCollection(course, true, false);
-              } else if (value == "Do Both") {
-                approveMaterialCollection(course, true, true);
-              }
-            },
-          );
+          approveMaterialCollection(course);
         });
   }
 
-  void approveMaterialCollection(
-      String courseName, bool deleteNone, bool updateSubject) async {
+  void approveMaterialCollection(String courseName) async {
     setState(() {
       isProcessComplete = true;
     });
-    if (updateSubject) {
-      await FirebaseData().updateCoursesSubject(courseName, false, false);
-      await FirebaseData().updateCoursesSubject(courseName, true, false);
-    }
-    if (deleteNone) {
-      await FirebaseData().updateCoursesSubject(courseName, false, true);
-    }
+    await FirebaseData().updateCoursesSubject(courseName);
+
     Fluttertoast.showToast(
         msg: "Processing Completed", toastLength: Toast.LENGTH_LONG);
     setState(() {

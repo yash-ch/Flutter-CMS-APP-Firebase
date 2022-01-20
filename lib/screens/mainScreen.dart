@@ -49,20 +49,18 @@ class _MainScreenState extends State<MainScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                lightTextWidget("Configure"),
-                Padding(padding: EdgeInsets.all(5.0)),
-                rectangleListViewBuilder(context, ["Courses"]),
+                // rectangleListViewBuilder(context, ["Courses", "AECC & GE"]),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 10.0, 0, 10.0),
                   child: Text(
-                    "Add Or Change",
+                    "Add Or Update",
                     style: Get.isDarkMode
                         ? darkModeLightTextStyle
                         : lightModeLightTextStyle,
                   ),
                 ),
                 rectangleListViewBuilder(
-                    context, ["Resources", "Top Banners", "Events"]),
+                    context, ["Courses", "AECC & GE","Resources", "Top Banners", "Events"]),
               ],
             ),
           ),
@@ -134,6 +132,7 @@ Widget rectangleListViewBuilder(dynamic context, List changeItemList) {
 Widget roundedRectangleWidget(dynamic context, String changeItem) {
   double widthOfBox = ((MediaQuery.of(context).size.width) / 2) - 30;
   return InkWell(
+    borderRadius: BorderRadius.all(Radius.circular(20)),
     child: ClipRRect(
       borderRadius: BorderRadius.all(Radius.circular(20)),
       child: Container(
