@@ -26,11 +26,19 @@ class _ChangeScreenState extends State<ChangeScreen> {
   List _subjectList = [];
   List _semesterList = [1, 2, 3, 4, 5, 6];
 
+  //for aecc &ge
+  bool _onAddNewSubject = false;
+
   Map _resourcesItemMap = {
     "Course": "none",
     "Material": "none",
-    "Semester": "none"
+    "Semester": "none",
+    "AECC or GE": "none"
   };
+
+  //for GE or AECC
+  final TextEditingController newSubjectNameController =
+      TextEditingController();
 
   bool _isEverythingSelected = false;
 
@@ -65,9 +73,11 @@ class _ChangeScreenState extends State<ChangeScreen> {
                   strokeWidth: 4.0,
                 ),
               )
-            : widget.changeItem == "Courses"
+            : (widget.changeItem == "Courses")
                 ? configureCourse()
-                : resourcesAddOrChange());
+                : widget.changeItem == "Resources"
+                    ? resourcesAddOrChange()
+                    : manageAeccOrGE());
   }
 
   //screen for changing the courses and adding new
@@ -81,6 +91,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.all(Radius.circular(20.0)),
               child: InkWell(
+                borderRadius: BorderRadius.all(Radius.circular(20)),
                 onTap: () {
                   Navigator.push(
                       context,
@@ -130,8 +141,139 @@ class _ChangeScreenState extends State<ChangeScreen> {
         ]);
   }
 
+  Widget manageAeccOrGE() {
+    _resourcesItemMap["Course"] = "aeccsonotnone"; //for line 157
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        _chooseItemWidget(_materialList, "Material"),
+        Padding(padding: EdgeInsets.all(5.0)),
+        _chooseItemWidget(["AECC", "GE"], "AECC or GE"),
+        Padding(padding: EdgeInsets.all(5.0)),
+        _chooseItemWidget(_semesterList, "Semester"),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(10.0),
+            child: ElevatedButton(
+              onPressed: () {
+                if (_resourcesItemMap.values.contains("none")) {
+                  Fluttertoast.showToast(
+                      msg: "Please select every field.",
+                      toastLength: Toast.LENGTH_LONG);
+                } else {
+                  Fluttertoast.showToast(
+                      msg: "Subjects list is loading, Please wait.",
+                      toastLength: Toast.LENGTH_LONG);
+                  _loadAeccOrGEData();
+                }
+              },
+              child: Text("Load Subjects"),
+              style: ElevatedButton.styleFrom(primary: selectedIconColor),
+            ),
+          ),
+        ),
+        _onAddNewSubject
+            ? Center(
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(primary: selectedIconColor),
+                    onPressed: () {
+                      newSubjectNameController.text = "";
+                      addOrChangeSubjectButtonTap(0, "none");
+                    },
+                    child: Text("Add New Subject")),
+              )
+            : Offstage(),
+        lightTextWidget("Subjects"),
+        Padding(padding: EdgeInsets.all(5.0)),
+        Expanded(
+          child: _isEverythingSelected
+              ? RefreshIndicator(
+                  onRefresh: _loadAeccOrGEData,
+                  child: _fullWidthListViewBuilder(context, _subjectList))
+              : Center(child: Text("No Subject Data")),
+        )
+      ],
+    );
+  }
+
+  //for AECC or GE
+  void addOrChangeSubjectButtonTap(
+      int addOrChangeOrDelete, String previousName) {
+    showMaterialResponsiveDialog(
+        context: context,
+        title: addOrChangeOrDelete == 0 ? "Add New Subject" : "Update Subject",
+        headerColor: Get.isDarkMode ? Colors.black45 : selectedIconColor,
+        maxLongSide: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            lightTextWidget("Enter Subject Name"),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0),
+              child: TextField(
+                controller: newSubjectNameController,
+                decoration: InputDecoration(
+                  labelText: "Subject",
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 16.0),
+              child: Center(
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(primary: selectedIconColor),
+                    onPressed: () async {
+                      _onTapAddUploadOrDelete(
+                          addOrChangeOrDelete, previousName);
+                    },
+                    child: Text(addOrChangeOrDelete == 0 ? "Add" : "Update")),
+              ),
+            ),
+            addOrChangeOrDelete == 1 //false for change
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 16.0),
+                    child: Center(
+                      child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              primary: selectedIconColor),
+                          onPressed: () {
+                            _onTapAddUploadOrDelete(2, previousName);
+                          },
+                          child: Text("Delete")),
+                    ),
+                  )
+                : Offstage(),
+          ],
+        ));
+  }
+
+  Future<void> _onTapAddUploadOrDelete(
+      int addOrChangeOrDelete, String previousName) async {
+    Fluttertoast.showToast(
+        msg: "Please wait, processing", toastLength: Toast.LENGTH_SHORT);
+    await FirebaseData().manageAeccOrGESubjects(
+        int.parse(_resourcesItemMap["Semester"]),
+        _resourcesItemMap["AECC or GE"],
+        newSubjectNameController.text,
+        addOrChangeOrDelete,
+        previousName);
+    Fluttertoast.showToast(
+        msg: newSubjectNameController.text +
+            " has been " +
+            (addOrChangeOrDelete == 2
+                ? "deleted"
+                : addOrChangeOrDelete == 1
+                    ? "updated"
+                    : "added"),
+        toastLength: Toast.LENGTH_SHORT);
+    _loadAeccOrGEData();
+    Navigator.of(context).pop();
+  }
+
   //for resources widget
   Widget resourcesAddOrChange() {
+    _resourcesItemMap["AECC or GE"] = "notnone";
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -182,8 +324,11 @@ class _ChangeScreenState extends State<ChangeScreen> {
         Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 10.0, 16.0, 0.0),
           child: InkWell(
+            borderRadius: BorderRadius.all(Radius.circular(20)),
             onTap: () {
               showMaterialRadioPicker(
+                headerColor:
+                    Get.isDarkMode ? Colors.black45 : selectedIconColor,
                 context: context,
                 items: namesList,
                 selectedItem: _resourcesItemMap[title],
@@ -192,10 +337,10 @@ class _ChangeScreenState extends State<ChangeScreen> {
                   _resourcesItemMap[title] = value.toString();
                   setState(() {});
                 },
-                maxLongSide: title == "Material"
+                maxLongSide: (title == "Material" || title == "Semester")
                     ? 470
-                    : title == "Semester"
-                        ? 470
+                    : (title == "AECC or GE")
+                        ? 340
                         : 600,
               );
             },
@@ -242,13 +387,51 @@ class _ChangeScreenState extends State<ChangeScreen> {
           _courseList = await FirebaseData().courses();
           _materialList = await FirebaseData().materialType();
           break;
-        case "Top Banners":
-        case "Events":
+        case "AECC & GE":
+          _materialList = await FirebaseData().materialType();
       }
       setState(() {
         _isLoading = false;
       });
     } catch (e) {}
+  }
+
+  Future<void> _loadAeccOrGEData() async {
+    _subjectList = await FirebaseData().aeccGESubjects(
+        int.parse(_resourcesItemMap["Semester"]),
+        _resourcesItemMap["AECC or GE"]);
+    for (var subject in _subjectList) {
+      List documentData = await FirebaseData().aeccOrGEData(context,
+          int.parse(_resourcesItemMap["Semester"]),
+          _resourcesItemMap["AECC or GE"],
+          _resourcesItemMap["Material"],
+          subject,
+          0,
+          "none", {});
+      print(documentData);
+      if (documentData.length != 0) {
+        _uploadedAtAndBy[subject] = [
+          documentData.first["updatedOn"],
+          documentData.first["updatedBy"]
+        ];
+      } else {
+        _uploadedAtAndBy[subject] = ["\'No Record\'", "\'No Record\'"];
+      }
+    }
+    if (_subjectList.isNotEmpty) {
+      setState(() {
+        _isEverythingSelected = true;
+        _onAddNewSubject = true;
+      });
+    } else {
+      setState(() {
+        _isEverythingSelected = false;
+        _onAddNewSubject = true;
+      });
+
+      Fluttertoast.showToast(
+          msg: "Subjects are not available.", toastLength: Toast.LENGTH_SHORT);
+    }
   }
 
   Future<void> _loadResourcesData() async {
@@ -309,7 +492,7 @@ class _ChangeScreenState extends State<ChangeScreen> {
   Widget _fullWidthRoundedRectangleWidget(dynamic context, String title) {
     // double widthOfBox = ((MediaQuery.of(context).size.width));
     return InkWell(
-      focusColor: Colors.transparent,
+      borderRadius: BorderRadius.all(Radius.circular(20)),
       child: ClipRRect(
         borderRadius: BorderRadius.all(Radius.circular(20)),
         child: Container(
@@ -362,27 +545,91 @@ class _ChangeScreenState extends State<ChangeScreen> {
         ),
       ),
       onTap: () {
-        Navigator.push(
-            context,
-            PageRouteBuilder(
-                pageBuilder: (BuildContext context, animation1, animation2) {
-                  return widget.changeItem == "Courses"
-                      ? AddOrChangeCourse(
-                          addOrChange: "Change",
-                          changeCourse: title,
-                        )
-                      : ConfigureScreen(
-                          whichScreen: "Resources",
-                          resources: {
-                            "materialType": _resourcesItemMap["Material"],
-                            "subject": title,
-                            "course": _resourcesItemMap["Course"],
-                            "semester": int.parse(_resourcesItemMap["Semester"])
+        switch (widget.changeItem) {
+          case "AECC & GE":
+            showMaterialResponsiveDialog(
+                context: context,
+                headerColor:
+                    Get.isDarkMode ? Colors.black45 : selectedIconColor,
+                maxLongSide: 340.0,
+                title: "Select",
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      Text("What do you want to do?"),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            newSubjectNameController.text = title;
+                            addOrChangeSubjectButtonTap(1, title);
                           },
-                          // users: {},
-                        );
-                },
-                transitionsBuilder: transitionEffectForNavigator()));
+                          child: Text("Change Subject Name"),
+                          style: ElevatedButton.styleFrom(
+                              primary: selectedIconColor),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 0.0),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                    pageBuilder: (BuildContext context,
+                                        animation1, animation2) {
+                                      return ConfigureScreen(
+                                        whichScreen: "AECC&GE",
+                                        resources: {
+                                          "aeccOrGE":
+                                              _resourcesItemMap["AECC or GE"],
+                                          "semester": int.parse(
+                                              _resourcesItemMap["Semester"]),
+                                          "materialType":
+                                              _resourcesItemMap["Material"],
+                                          "subject": title,
+                                          "course": "none"
+                                        },
+                                      );
+                                    },
+                                    transitionsBuilder:
+                                        transitionEffectForNavigator()));
+                          },
+                          child: Text("Add Material for Subject"),
+                          style: ElevatedButton.styleFrom(
+                              primary: selectedIconColor),
+                        ),
+                      )
+                    ],
+                  ),
+                ));
+
+            break;
+          default:
+            Navigator.push(
+                context,
+                PageRouteBuilder(
+                    pageBuilder:
+                        (BuildContext context, animation1, animation2) {
+                      return widget.changeItem == "Courses"
+                          ? AddOrChangeCourse(
+                              addOrChange: "Change",
+                              changeCourse: title,
+                            )
+                          : ConfigureScreen(
+                              whichScreen: "Resources",
+                              resources: {
+                                "materialType": _resourcesItemMap["Material"],
+                                "subject": title,
+                                "course": _resourcesItemMap["Course"],
+                                "semester":
+                                    int.parse(_resourcesItemMap["Semester"])
+                              },
+                            );
+                    },
+                    transitionsBuilder: transitionEffectForNavigator()));
+        }
       },
     );
   }
