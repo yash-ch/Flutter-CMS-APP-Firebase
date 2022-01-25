@@ -21,7 +21,8 @@ const DarkAppBarTextStyle = TextStyle(
 );
 
 // var selectedIconColor = Color(0xffff8a67); //orange
-var selectedIconColor = Color(0xffBB86FC);
+// var selectedIconColor = Color(0xffBB86FC);
+var selectedIconColor = Color(0xff6b6dd6);
 
 Color lightBackgroundColor = Colors.white;
 Color darkBackgroundColor = Colors.black;

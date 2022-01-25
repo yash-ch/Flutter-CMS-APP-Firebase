@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_material_pickers/flutter_material_pickers.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/route_manager.dart';
+import 'package:http/http.dart' as http;
 
 class AddOrChangeResources extends StatefulWidget {
+  //for resources and AECC and GE
   final String whichScreen;
   final String addOrChange;
   final String course;
@@ -100,37 +102,7 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(primary: selectedIconColor),
                 onPressed: () {
-                  if (_titleOfTheMaterial.text.trim() == "" ||
-                      _linkOfTheMaterial.text.trim() == "") {
-                    Fluttertoast.showToast(
-                        msg: "Material name and email can't be left blank.",
-                        toastLength: Toast.LENGTH_LONG);
-                  } else {
-                    if (widget.whichScreen == "Resources") {
-                      FirebaseData().materialData(
-                          context,
-                          widget.addOrChange,
-                          widget.changeMaterial,
-                          widget.course,
-                          widget.materialType,
-                          widget.subject,
-                          widget.semester,
-                          _titleOfTheMaterial.text.trim(),
-                          _linkOfTheMaterial.text.trim());
-                    } else {
-                      FirebaseData().aeccOrGEData(
-                          context,
-                          widget.semester,
-                          widget.course,
-                          widget.materialType,
-                          widget.subject,
-                          widget.addOrChange == "Add" ? 1 : 2,
-                          widget.changeMaterial, {
-                        "name": _titleOfTheMaterial.text.trim(),
-                        "link": _linkOfTheMaterial.text.trim()
-                      });
-                    }
-                  }
+                  _updatedOrUploadResources();
                 },
                 child: widget.addOrChange == "Change"
                     ? Text("UPDATE")
@@ -139,64 +111,103 @@ class _AddOrChangeResourceState extends State<AddOrChangeResources> {
         ),
         widget.addOrChange == "Change"
             ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: ElevatedButton(
-                      onPressed: () {
-                        showMaterialResponsiveDialog(
-                            headerColor: Get.isDarkMode
-                                ? Colors.black45
-                                : selectedIconColor,
-                            context: context,
-                            title: "Are you sure?",
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10.0),
-                                    child: Text(
-                                      "Are you sure you want to delete \"${widget.changeMaterial}\"? You won't be able to restore it.",
-                                      style: TextStyle(fontSize: SmallTextSize),
-                                    ),
+                child: ElevatedButton(
+                    onPressed: () {
+                      showMaterialResponsiveDialog(
+                          headerColor: Get.isDarkMode
+                              ? Colors.black45
+                              : selectedIconColor,
+                          context: context,
+                          title: "Are you sure?",
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 10.0),
+                                  child: Text(
+                                    "Are you sure you want to delete \"${widget.changeMaterial}\"? You won't be able to restore it.",
+                                    style: TextStyle(fontSize: SmallTextSize),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            maxLongSide: 340,
-                            onConfirmed: () {
-                              if (widget.whichScreen == "Resources") {
-                                FirebaseData().materialData(
-                                    context,
-                                    "Delete",
-                                    widget.changeMaterial,
-                                    widget.course,
-                                    widget.materialType,
-                                    widget.subject,
-                                    widget.semester,
-                                    "",
-                                    "");
-                              } else {
-                                FirebaseData().aeccOrGEData(
-                                    context,
-                                    widget.semester,
-                                    widget.course,
-                                    widget.materialType,
-                                    widget.subject,
-                                    3,
-                                    widget.changeMaterial, {});
-                              }
-                            });
-                      },
-                      style:
-                          ElevatedButton.styleFrom(primary: selectedIconColor),
-                      child: Text("DELETE")),
-                ),
+                          ),
+                          maxLongSide: 340,
+                          onConfirmed: () {
+                            if (widget.whichScreen == "Resources") {
+                              FirebaseData().materialData(
+                                  context,
+                                  "Delete",
+                                  widget.changeMaterial,
+                                  widget.course,
+                                  widget.materialType,
+                                  widget.subject,
+                                  widget.semester,
+                                  "",
+                                  "");
+                            } else {
+                              FirebaseData().aeccOrGEData(
+                                  context,
+                                  widget.semester,
+                                  widget.course,
+                                  widget.materialType,
+                                  widget.subject,
+                                  3,
+                                  widget.changeMaterial, {});
+                            }
+                          });
+                    },
+                    style: ElevatedButton.styleFrom(primary: selectedIconColor),
+                    child: Text("DELETE")),
               )
             : Offstage()
       ],
     );
+  }
+
+  Future<void> _updatedOrUploadResources() async {
+    if (_titleOfTheMaterial.text.trim() == "" ||
+        _linkOfTheMaterial.text.trim() == "") {
+      Fluttertoast.showToast(
+          msg: "Material name and email can't be left blank.",
+          toastLength: Toast.LENGTH_LONG);
+    } else {
+      try {
+        await http.get(Uri.parse(_linkOfTheMaterial.text.trim()));
+        if (widget.whichScreen == "Resources") {
+          FirebaseData().materialData(
+              context,
+              widget.addOrChange,
+              widget.changeMaterial,
+              widget.course,
+              widget.materialType,
+              widget.subject,
+              widget.semester,
+              _titleOfTheMaterial.text.trim(),
+              _linkOfTheMaterial.text.trim());
+        } else {
+          FirebaseData().aeccOrGEData(
+              context,
+              widget.semester,
+              widget.course,
+              widget.materialType,
+              widget.subject,
+              widget.addOrChange == "Add" ? 1 : 2,
+              widget.changeMaterial, {
+            "name": _titleOfTheMaterial.text.trim(),
+            "link": _linkOfTheMaterial.text.trim()
+          });
+        }
+      } catch (e) {
+        print(e);
+        Fluttertoast.showToast(
+            msg:
+                "Uploading failed. Please recheck your links.(check https:// or http:// also)",
+            toastLength: Toast.LENGTH_LONG);
+      }
+    }
   }
 
   Future<void> _prefillTextField() async {

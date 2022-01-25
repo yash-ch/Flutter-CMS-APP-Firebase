@@ -1,5 +1,5 @@
 import 'package:cmseduc/screens/mainScreen.dart';
-import 'package:cmseduc/screens/textFieldScreens/addOrChangeEvents.dart';
+import 'package:cmseduc/screens/textFieldScreens/addOrChangeEventsAndNews.dart';
 import 'package:cmseduc/screens/textFieldScreens/addOrChangeResources.dart';
 import 'package:cmseduc/screens/textFieldScreens/manageUsers.dart';
 import 'package:cmseduc/utils/firebaseData.dart';
@@ -104,7 +104,7 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                                               ? ManageUsers(
                                                   addOrChange: "Add",
                                                   previousUserName: "none")
-                                              : AddOrChangeEvents(
+                                              : AddOrChangeEventsAndNews(
                                                   whichEvents:
                                                       widget.whichScreen,
                                                   addOrChange: "Add",
@@ -249,6 +249,20 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
           setState(() {
             _isDocumentsLoaded = true;
           });
+        break;
+        case "News":
+          _documentsList = [];
+          List eventsData = await FirebaseData().newsData();
+          for (var event in eventsData) {
+            _documentsList.add(event["name"]);
+            _updatedBy[event["name"]] = event["uploadedBy"];
+            _updatedOn[event["name"]] = event["uploadedOn"];
+            _eventDate[event["name"]] = event["event_date"];
+          }
+          setState(() {
+            _isDocumentsLoaded = true;
+          });
+          break;
       }
     } catch (e) {
       print(e);
@@ -363,7 +377,7 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                       : widget.whichScreen == "Manage Users"
                           ? ManageUsers(
                               addOrChange: "Change", previousUserName: title)
-                          : AddOrChangeEvents(
+                          : AddOrChangeEventsAndNews(
                               whichEvents: widget.whichScreen,
                               addOrChange: "Change",
                               changeEvent: title,

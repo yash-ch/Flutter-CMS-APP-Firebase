@@ -60,7 +60,7 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                 ),
                 rectangleListViewBuilder(
-                    context, ["Courses", "AECC & GE","Resources", "Top Banners", "Events"]),
+                    context, ["Courses", "AECC & GE","Resources", "Top Banners", "Events", "News"]),
               ],
             ),
           ),
@@ -166,7 +166,7 @@ Widget roundedRectangleWidget(dynamic context, String changeItem) {
           context,
           PageRouteBuilder(
               pageBuilder: (BuildContext context, animation1, animation2) {
-                return (changeItem == "Top Banners" || changeItem == "Events")
+                return (changeItem == "Top Banners" || changeItem == "Events" || changeItem == "News")
                     ? ConfigureScreen(whichScreen: changeItem, resources: {})
                     : ChangeScreen(changeItem: changeItem);
               },

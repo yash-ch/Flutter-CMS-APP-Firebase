@@ -339,10 +339,7 @@ class FirebaseData {
 
             for (var subject in subjectReference.docs) {
               QuerySnapshot<Map<String, dynamic>> materialReference =
-                  await subject.reference
-                      .collection("material")
-                      // .orderBy("updatedOn")
-                      .get();
+                  await subject.reference.collection("material").get();
               for (var materialItem in materialReference.docs) {
                 switch (addOrChangeOrDelete) {
                   case "none":
@@ -354,6 +351,7 @@ class FirebaseData {
                     if (!_isAddedOrChanged) {
                       if (materialItem["name"] != materialName ||
                           materialItem["link"] != materialLink) {
+                        Fluttertoast.showToast(msg: "Please wait, processing.");
                         subject.reference.collection("material").add({
                           "name": materialName,
                           "link": materialLink,
@@ -382,6 +380,7 @@ class FirebaseData {
                           .where("name", isEqualTo: changeMaterialName)
                           .get();
                       for (var item in docuIdSnapshot.docs) {
+                        Fluttertoast.showToast(msg: "Please wait, processing.");
                         await subject.reference
                             .collection("material")
                             .doc(item.id)
@@ -411,6 +410,7 @@ class FirebaseData {
                         .where("name", isEqualTo: changeMaterialName)
                         .get();
                     for (var item in docuIdSnapshot.docs) {
+                      Fluttertoast.showToast(msg: "Please wait, processing.");
                       await subject.reference
                           .collection("material")
                           .doc(item.id)
@@ -548,6 +548,7 @@ class FirebaseData {
                 Fluttertoast.showToast(
                     msg: "$materialType is already present in the database.");
               } else {
+                Fluttertoast.showToast(msg: "Please wait, processing.");
                 //add
                 await subject.reference.collection("material").add({
                   "link": dataMap["link"],
@@ -576,6 +577,7 @@ class FirebaseData {
               for (var material in materialReference.docs) {
                 switch (addOrChangeOrDelete) {
                   case 2:
+                    Fluttertoast.showToast(msg: "Please wait, processing.");
                     await subject.reference
                         .collection("material")
                         .doc(material.id)
@@ -586,6 +588,7 @@ class FirebaseData {
 
                     break;
                   case 3:
+                    Fluttertoast.showToast(msg: "Please wait, processing.");
                     await subject.reference
                         .collection("material")
                         .doc(material.id)
@@ -704,6 +707,7 @@ class FirebaseData {
     return allTheMaterial;
   }
 
+  //for events
   Future<void> managingEvents(context, String eventType, Map data,
       int addOrChangeOrDelete, String previousName) async {
     print(data);
@@ -719,7 +723,7 @@ class FirebaseData {
     if (_eventsNames.contains(data["name"]) && addOrChangeOrDelete == 0) {
       Fluttertoast.showToast(
           msg: "Same name event is already present in the database.",
-          toastLength: Toast.LENGTH_LONG);
+          toastLength: Toast.LENGTH_SHORT);
     } else {
       if (addOrChangeOrDelete == 0) {
         _imageLink =
@@ -788,7 +792,7 @@ class FirebaseData {
                   "name": data["name"],
                   "image_link": _imageLink,
                   "link": data["link"],
-                  "uploadedBy": data["uploadedBy"],
+                  "uploadedBy": userEmail,
                   "uploadedOn":
                       "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
                 });
@@ -797,7 +801,7 @@ class FirebaseData {
                   "name": data["name"],
                   "image_link": _imageLink,
                   "link": data["link"],
-                  "uploadedBy": data["uploadedBy"],
+                  "uploadedBy": userEmail,
                   "uploadedOn":
                       "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}",
                   "event_date": data["event_date"]
@@ -819,7 +823,7 @@ class FirebaseData {
                     "name": data["name"],
                     "image_link": data["image_link"],
                     "link": data["link"],
-                    "uploadedBy": data["uploadedBy"],
+                    "uploadedBy": userEmail,
                     "uploadedOn":
                         "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
                   });
@@ -828,7 +832,7 @@ class FirebaseData {
                     "name": data["name"],
                     "image_link": data["image_link"],
                     "link": data["link"],
-                    "uploadedBy": data["uploadedBy"],
+                    "uploadedBy": userEmail,
                     "uploadedOn":
                         "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}",
                     "event_date": data["event_date"]
@@ -862,6 +866,7 @@ class FirebaseData {
     }
   }
 
+  //for events
   Future<String> _uploadImageAndReturnLink(
       String whichEvent, String imageName, bool returnImageOrDoBoth) async {
     try {
@@ -893,6 +898,7 @@ class FirebaseData {
     }
   }
 
+  //for events
   Future<void> _deleteImage(String imageLocation) async {
     try {
       Fluttertoast.showToast(
@@ -903,6 +909,130 @@ class FirebaseData {
     } catch (e) {
       Fluttertoast.showToast(
           msg: "Something went wrong.", toastLength: Toast.LENGTH_SHORT);
+    }
+  }
+
+  // Future<List> newsData(bool initialOrWhole) async {
+  //   //will load only some news in initial (intial == true)|(whole data == false)
+  //   List allTheMaterial = [];
+
+  //   QuerySnapshot<Map<String, dynamic>> eventData = await fireStore
+  //       .collection('HomePage')
+  //       .where("name", isEqualTo: "news")
+  //       .get();
+
+  //   for (var event in eventData.docs) {
+  //     if (initialOrWhole) {
+  //       QuerySnapshot<Map<String, dynamic>> postsReference =
+  //           await event.reference.collection("Posts").limit(10).get();
+
+  //       for (var post in postsReference.docs) {
+  //         allTheMaterial.add(post.data());
+  //       }
+  //     } else {
+  //       QuerySnapshot<Map<String, dynamic>> postsReference =
+  //           await event.reference.collection("Posts").get();
+
+  //       for (var post in postsReference.docs) {
+  //         allTheMaterial.add(post.data());
+  //       }
+  //     }
+  //   }
+  //   return allTheMaterial;
+  // }
+
+  Future<List> newsData() async {
+    List allTheMaterial = [];
+
+    QuerySnapshot<Map<String, dynamic>> eventData = await fireStore
+        .collection('HomePage')
+        .where("name", isEqualTo: "news")
+        .get();
+
+    for (var event in eventData.docs) {
+      QuerySnapshot<Map<String, dynamic>> postsReference =
+          await event.reference.collection("Posts").get();
+
+      for (var post in postsReference.docs) {
+        allTheMaterial.add(post.data());
+      }
+    }
+    return allTheMaterial;
+  }
+
+  Future<void> managingNews(
+      context, Map data, int addOrChangeOrDelete, String previousName) async {
+    List _newsNames = [];
+    List _newsDataList = await newsData();
+    for (var post in _newsDataList) {
+      _newsNames.add(post["name"]);
+    }
+    if (_newsNames.contains(data["name"]) && addOrChangeOrDelete == 0) {
+      Fluttertoast.showToast(
+          msg: "Same headline news is already present in the database.",
+          toastLength: Toast.LENGTH_SHORT);
+    } else {
+      QuerySnapshot<Map<String, dynamic>> eventData = await fireStore
+          .collection('HomePage')
+          .where("name", isEqualTo: "news")
+          .get();
+
+      for (var event in eventData.docs) {
+        CollectionReference<Map<String, dynamic>> postsReference =
+            event.reference.collection("Posts");
+        switch (addOrChangeOrDelete) {
+          case 0:
+            postsReference.add({
+              "name": data["name"],
+              "image_link": data["image_link"],
+              "link": data["link"],
+              "uploadedBy": userEmail,
+              "uploadedOn":
+                  "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+            });
+            Fluttertoast.showToast(
+                msg: "News was successfully added.",
+                toastLength: Toast.LENGTH_LONG);
+
+            break;
+          case 1:
+            QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
+                await postsReference
+                    .where("name", isEqualTo: previousName)
+                    .get();
+            for (var item in docuIdSnapshot.docs) {
+              await postsReference.doc(item.id).update({
+                "name": data["name"],
+                "image_link": data["image_link"],
+                "link": data["link"],
+                "uploadedBy": userEmail,
+                "uploadedOn":
+                    "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+              });
+              Fluttertoast.showToast(
+                  msg: "News was successfully updated.",
+                  toastLength: Toast.LENGTH_LONG);
+              break;
+            }
+            break;
+          case 2: //for deleting event
+            QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
+                await postsReference
+                    .where("name", isEqualTo: previousName)
+                    .get();
+            for (var item in docuIdSnapshot.docs) {
+              await _deleteImage("images/news/$previousName");
+              await postsReference.doc(item.id).delete();
+              Fluttertoast.showToast(
+                  msg: "News was successfully deleted.",
+                  toastLength: Toast.LENGTH_LONG);
+              break;
+            }
+            break;
+        }
+      }
+
+      Navigator.of(context).pop();
     }
   }
 }

@@ -8,26 +8,28 @@ import 'package:get/route_manager.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
-class AddOrChangeEvents extends StatefulWidget {
+class AddOrChangeEventsAndNews extends StatefulWidget {
   final String whichEvents;
   final String addOrChange;
   final String changeEvent;
-  const AddOrChangeEvents(
+  const AddOrChangeEventsAndNews(
       {Key? key,
       required this.whichEvents,
       required this.addOrChange,
       required this.changeEvent})
       : super(key: key);
   @override
-  _AddOrChangeEventsState createState() => _AddOrChangeEventsState();
+  _AddOrChangeEventsAndNewsState createState() =>
+      _AddOrChangeEventsAndNewsState();
 }
 
-class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
+class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
   final TextEditingController _nameOfTheEvent = TextEditingController();
-  // final TextEditingController _imageLinkOfTheEvent = TextEditingController();
   final TextEditingController _websiteLinkOfTheEvent = TextEditingController();
   String _dateOfTheEvent = "";
   String _imageLinkOfTheEvent = "";
+
+  final TextEditingController _imageLinkOfTheNews = TextEditingController();
 
   @override
   void initState() {
@@ -53,11 +55,11 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: addOrChangeEventsWidget(),
+      body: addOrChangeEventsAndNewsWidget(),
     );
   }
 
-  Widget addOrChangeEventsWidget() {
+  Widget addOrChangeEventsAndNewsWidget() {
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,10 +67,20 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
           // lightTextWidget("Name of the Event"),
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
-            child: TextField(
-              controller: _nameOfTheEvent,
-              decoration: InputDecoration(
-                labelText: "Event Name",
+            child: Container(
+              width: getDeviceWidth(context) - 32,
+              child: TextField(
+                controller: _nameOfTheEvent,
+                decoration: InputDecoration(
+                  labelText: widget.whichEvents == "News"
+                      ? "Headline of the news"
+                      : "Event Name",
+                ),
+                // minLines: widget.whichEvents == "News" ? null : 1,
+                maxLines: widget.whichEvents == "News" ? 3 : 1,
+                keyboardType: TextInputType.multiline,
+                autofocus: true,
+                
               ),
             ),
           ),
@@ -81,6 +93,17 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
               ),
             ),
           ),
+          widget.whichEvents == "News"
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+                  child: TextField(
+                    controller: _imageLinkOfTheNews,
+                    decoration: InputDecoration(
+                      labelText: "Image Link",
+                    ),
+                  ),
+                )
+              : Offstage(),
           widget.whichEvents == "Events"
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
@@ -219,14 +242,6 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
   Future<void> _uploadOrUpdatedEvent() async {
     if (_nameOfTheEvent.text.trim() != "") {
       try {
-        if (_websiteLinkOfTheEvent.text.trim().contains(
-                "http://") || //for adding https if the doesn't have it
-            _websiteLinkOfTheEvent.text.trim().contains("https://")) {
-        } else {
-          _websiteLinkOfTheEvent.text =
-              "https://" + _websiteLinkOfTheEvent.text.trim();
-        }
-
         await http.get(Uri.parse(_websiteLinkOfTheEvent.text.trim()));
 
         if (widget.whichEvents == "Top Banners") {
@@ -237,11 +252,10 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                 "name": _nameOfTheEvent.text.trim(),
                 "link": _websiteLinkOfTheEvent.text.trim(),
                 "image_link": _imageLinkOfTheEvent,
-                "uploadedBy": userEmail,
               },
               widget.addOrChange == "Add" ? 0 : 1,
               widget.changeEvent);
-        } else {
+        } else if (widget.whichEvents == "Events") {
           if (_dateOfTheEvent != "") {
             FirebaseData().managingEvents(
                 context,
@@ -249,7 +263,6 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                 {
                   "name": _nameOfTheEvent.text.trim(),
                   "link": _websiteLinkOfTheEvent.text.trim(),
-                  "uploadedBy": userEmail,
                   "image_link": _imageLinkOfTheEvent,
                   "event_date": _dateOfTheEvent
                 },
@@ -260,17 +273,29 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
                 msg: "Event date can't be left blank.",
                 toastLength: Toast.LENGTH_LONG);
           }
+        } else if (widget.whichEvents == "News") {
+          await http.get(Uri.parse(_imageLinkOfTheNews.text.trim()));
+
+          FirebaseData().managingNews(
+              context,
+              {
+                "name": _nameOfTheEvent.text.trim(),
+                "link": _websiteLinkOfTheEvent.text.trim(),
+                "image_link": _imageLinkOfTheNews.text.trim(),
+              },
+              widget.addOrChange == "Add" ? 0 : 1,
+              widget.changeEvent);
         }
       } catch (e) {
         print(e);
         Fluttertoast.showToast(
-            msg: "Uploading failed. Please recheck your links.",
+            msg:
+                "Uploading failed. Please recheck your links.(check https:// or http:// also)",
             toastLength: Toast.LENGTH_LONG);
       }
     } else {
       Fluttertoast.showToast(
-          msg: "Event name can't be left blank.",
-          toastLength: Toast.LENGTH_LONG);
+          msg: "Name can't be left blank.", toastLength: Toast.LENGTH_LONG);
     }
   }
 
@@ -288,7 +313,7 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
               setState(() {});
             }
           }
-        } else {
+        } else if (widget.whichEvents == "Events") {
           List eventList = await FirebaseData().eventsData("all_events");
 
           for (var event in eventList) {
@@ -297,6 +322,17 @@ class _AddOrChangeEventsState extends State<AddOrChangeEvents> {
               _websiteLinkOfTheEvent.text = event["link"];
               _nameOfTheEvent.text = event["name"];
               _dateOfTheEvent = event["event_date"];
+              setState(() {});
+            }
+          }
+        } else if (widget.whichEvents == "News") {
+          List newsList = await FirebaseData().newsData();
+          for (var news in newsList) {
+            
+            if (news["name"] == widget.changeEvent) {
+              _imageLinkOfTheNews.text = news["image_link"];
+              _websiteLinkOfTheEvent.text = news["link"];
+              _nameOfTheEvent.text = news["name"];
               setState(() {});
             }
           }
