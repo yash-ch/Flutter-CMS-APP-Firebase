@@ -313,9 +313,12 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      overflow: TextOverflow.ellipsis,
+                    Container(
+                      width: getDeviceWidth(context) - 100,
+                      child: Text(
+                        title,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     widget.whichScreen == "Events"
                         ? Text(

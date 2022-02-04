@@ -24,6 +24,9 @@ class FirebaseData {
     return nameOfTheCourses;
   }
 
+  String updatedOn =
+      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}";
+
   Future<List> materialType() async {
     List materialTypeList = [];
     QuerySnapshot<Map<String, dynamic>> data =
@@ -95,8 +98,7 @@ class FirebaseData {
             "sem5": sem5List,
             "sem6": sem6List,
             "uploadBy": userEmail,
-            "uploadAt":
-                "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+            "uploadAt": updatedOn
           });
         } else {
           QuerySnapshot<Map<String, dynamic>> docuIdSnapshot =
@@ -118,8 +120,7 @@ class FirebaseData {
             "sem5": sem5List,
             "sem6": sem6List,
             "uploadBy": userEmail,
-            "uploadAt":
-                "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+            "uploadAt": updatedOn
           });
         }
 
@@ -356,8 +357,7 @@ class FirebaseData {
                           "name": materialName,
                           "link": materialLink,
                           "updatedBy": userEmail,
-                          "updatedOn":
-                              "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                          "updatedOn": updatedOn
                         });
                         _isAddedOrChanged = true;
                       } else {
@@ -367,6 +367,15 @@ class FirebaseData {
                       }
                       Fluttertoast.showToast(
                           msg: "$materialType was successfully uploaded.");
+                      await uploadTransaction(
+                          "${[
+                            changeMaterialName,
+                            courseName,
+                            materialType,
+                            subjectName,
+                            sem,
+                          ]}",
+                          "add");
                       Navigator.of(context).pop();
                     }
                     break;
@@ -388,13 +397,22 @@ class FirebaseData {
                           "name": materialName,
                           "link": materialLink,
                           "updatedBy": userEmail,
-                          "updatedOn":
-                              "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                          "updatedOn": updatedOn
                         });
                         _isAddedOrChanged = true;
 
                         Fluttertoast.showToast(
                             msg: "$materialType was successfully updated.");
+                        await uploadTransaction(
+                            "${[
+                              changeMaterialName,
+                              courseName,
+                              materialType,
+                              subjectName,
+                              sem,
+                            ]}",
+                            "update");
+
                         Navigator.of(context).pop();
 
                         break;
@@ -419,6 +437,15 @@ class FirebaseData {
 
                       Fluttertoast.showToast(
                           msg: "$materialType was successfully Deleted.");
+                      await uploadTransaction(
+                          "${[
+                            changeMaterialName,
+                            courseName,
+                            materialType,
+                            subjectName,
+                            sem,
+                          ]}",
+                          "delete");
                       Navigator.of(context).pop();
                     }
                 }
@@ -554,11 +581,13 @@ class FirebaseData {
                   "link": dataMap["link"],
                   "name": dataMap["name"],
                   "updatedBy": userEmail,
-                  "updatedOn":
-                      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                  "updatedOn": updatedOn
                 });
                 Fluttertoast.showToast(
                     msg: "$materialType was successfully uploaded.");
+                await uploadTransaction(
+                    "${[sem, aeccOrGE, materialType, subjectName]}", "add");
+
                 Navigator.of(context).pop();
               }
             } else if (addOrChangeOrDelete == 0) {
@@ -584,6 +613,10 @@ class FirebaseData {
                         .update(dataMap);
                     Fluttertoast.showToast(
                         msg: "$materialType was successfully updated.");
+                    await uploadTransaction(
+                        "${[sem, aeccOrGE, materialType, subjectName]}",
+                        "update");
+
                     Navigator.of(context).pop();
 
                     break;
@@ -595,6 +628,14 @@ class FirebaseData {
                         .delete();
                     Fluttertoast.showToast(
                         msg: "$materialType was successfully deleted.");
+                    await uploadTransaction(
+                        "${[
+                          sem,
+                          aeccOrGE,
+                          materialType,
+                          subjectName,
+                        ]}",
+                        "delete");
                     Navigator.of(context).pop();
                     break;
                 }
@@ -793,8 +834,7 @@ class FirebaseData {
                   "image_link": _imageLink,
                   "link": data["link"],
                   "uploadedBy": userEmail,
-                  "uploadedOn":
-                      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                  "uploadedOn": updatedOn
                 });
               } else {
                 postsReference.add({
@@ -802,14 +842,14 @@ class FirebaseData {
                   "image_link": _imageLink,
                   "link": data["link"],
                   "uploadedBy": userEmail,
-                  "uploadedOn":
-                      "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}",
+                  "uploadedOn": updatedOn,
                   "event_date": data["event_date"]
                 });
               }
               Fluttertoast.showToast(
                   msg: "Event was successfully added.",
                   toastLength: Toast.LENGTH_LONG);
+              await uploadTransaction("event", "add");
 
               break;
             case 1:
@@ -824,8 +864,7 @@ class FirebaseData {
                     "image_link": data["image_link"],
                     "link": data["link"],
                     "uploadedBy": userEmail,
-                    "uploadedOn":
-                        "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                    "uploadedOn": updatedOn
                   });
                 } else {
                   await postsReference.doc(item.id).update({
@@ -833,14 +872,14 @@ class FirebaseData {
                     "image_link": data["image_link"],
                     "link": data["link"],
                     "uploadedBy": userEmail,
-                    "uploadedOn":
-                        "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}",
+                    "uploadedOn": updatedOn,
                     "event_date": data["event_date"]
                   });
                 }
                 Fluttertoast.showToast(
                     msg: "Event was successfully updated.",
                     toastLength: Toast.LENGTH_LONG);
+                await uploadTransaction("event", "update");
                 break;
               }
               break;
@@ -855,6 +894,7 @@ class FirebaseData {
                 Fluttertoast.showToast(
                     msg: "Event was successfully deleted.",
                     toastLength: Toast.LENGTH_LONG);
+                await uploadTransaction("event", "delete");
                 break;
               }
               break;
@@ -912,35 +952,6 @@ class FirebaseData {
     }
   }
 
-  // Future<List> newsData(bool initialOrWhole) async {
-  //   //will load only some news in initial (intial == true)|(whole data == false)
-  //   List allTheMaterial = [];
-
-  //   QuerySnapshot<Map<String, dynamic>> eventData = await fireStore
-  //       .collection('HomePage')
-  //       .where("name", isEqualTo: "news")
-  //       .get();
-
-  //   for (var event in eventData.docs) {
-  //     if (initialOrWhole) {
-  //       QuerySnapshot<Map<String, dynamic>> postsReference =
-  //           await event.reference.collection("Posts").limit(10).get();
-
-  //       for (var post in postsReference.docs) {
-  //         allTheMaterial.add(post.data());
-  //       }
-  //     } else {
-  //       QuerySnapshot<Map<String, dynamic>> postsReference =
-  //           await event.reference.collection("Posts").get();
-
-  //       for (var post in postsReference.docs) {
-  //         allTheMaterial.add(post.data());
-  //       }
-  //     }
-  //   }
-  //   return allTheMaterial;
-  // }
-
   Future<List> newsData() async {
     List allTheMaterial = [];
 
@@ -986,13 +997,14 @@ class FirebaseData {
               "name": data["name"],
               "image_link": data["image_link"],
               "link": data["link"],
+              "publish_date": data["publish_date"],
               "uploadedBy": userEmail,
-              "uploadedOn":
-                  "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+              "uploadedOn": updatedOn
             });
             Fluttertoast.showToast(
                 msg: "News was successfully added.",
                 toastLength: Toast.LENGTH_LONG);
+            await uploadTransaction("news", "add");
 
             break;
           case 1:
@@ -1005,13 +1017,14 @@ class FirebaseData {
                 "name": data["name"],
                 "image_link": data["image_link"],
                 "link": data["link"],
+                "publish_date": data["publish_date"],
                 "uploadedBy": userEmail,
-                "uploadedOn":
-                    "${DateTime.now().day} ${DateFormat("MMMM").format(DateTime.now())} ${DateTime.now().year} at ${DateFormat("jm").format(DateTime.now())}"
+                "uploadedOn": updatedOn
               });
               Fluttertoast.showToast(
                   msg: "News was successfully updated.",
                   toastLength: Toast.LENGTH_LONG);
+              await uploadTransaction("news", "update");
               break;
             }
             break;
@@ -1026,6 +1039,7 @@ class FirebaseData {
               Fluttertoast.showToast(
                   msg: "News was successfully deleted.",
                   toastLength: Toast.LENGTH_LONG);
+              await uploadTransaction("news", "delete");
               break;
             }
             break;
@@ -1034,6 +1048,31 @@ class FirebaseData {
 
       Navigator.of(context).pop();
     }
+  }
+
+  Future<void> uploadTransaction(String location, String activity) async {
+    DocumentReference<Map<String, dynamic>> otherData =
+        fireStore.collection('OtherData').doc("transactions");
+
+    await otherData.collection("data").add({
+      "userEmail": userEmail,
+      "time": updatedOn,
+      "location": location,
+      "activity": activity
+    });
+  }
+
+  Future<List> transactionData() async {
+    List transactionList = [];
+    DocumentReference<Map<String, dynamic>> otherData =
+        fireStore.collection('OtherData').doc("transactions");
+
+    QuerySnapshot<Map<String, dynamic>> data =
+        await otherData.collection("data").get();
+    for (var item in data.docs) {
+      transactionList.add(item.data());
+    }
+    return transactionList;
   }
 }
 
@@ -1051,7 +1090,7 @@ class CreateCollection {
 
   Map<String, Object?> toJson() {
     return {
-      'name': name,
+      "name": name,
     };
   }
 }

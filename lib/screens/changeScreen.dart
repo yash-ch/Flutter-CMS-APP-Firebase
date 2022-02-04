@@ -335,6 +335,11 @@ class _ChangeScreenState extends State<ChangeScreen> {
                 title: title,
                 onChanged: (value) {
                   _resourcesItemMap[title] = value.toString();
+                  if (value.toString() == "AECC") {
+                    _semesterList = [1, 3, 5];
+                  }else if (value.toString() == "GE"){
+                    _semesterList = [1,2,3,4];
+                  }
                   setState(() {});
                 },
                 maxLongSide: (title == "Material" || title == "Semester")
@@ -401,7 +406,8 @@ class _ChangeScreenState extends State<ChangeScreen> {
         int.parse(_resourcesItemMap["Semester"]),
         _resourcesItemMap["AECC or GE"]);
     for (var subject in _subjectList) {
-      List documentData = await FirebaseData().aeccOrGEData(context,
+      List documentData = await FirebaseData().aeccOrGEData(
+          context,
           int.parse(_resourcesItemMap["Semester"]),
           _resourcesItemMap["AECC or GE"],
           _resourcesItemMap["Material"],
@@ -515,9 +521,12 @@ class _ChangeScreenState extends State<ChangeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      overflow: TextOverflow.ellipsis,
+                    Container(
+                      width: getDeviceWidth(context) - 100,
+                      child: Text(
+                        title,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     Text(
                       "Last Updated on ${_uploadedAtAndBy[title][0]}",

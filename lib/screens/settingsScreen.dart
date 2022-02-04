@@ -56,8 +56,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.fromLTRB(0.0, 0.0, 0.0, 16.0),
               child: lightTextWidget("Update or Control"),
             ),
-            rectangleListViewBuilder(
-                context, ["Material Collection", "Manage Users"]),
+            rectangleListViewBuilder(context,
+                ["Material Collection", "Manage Users", "Transactions"]),
             Center(
               child: Visibility(
                 visible: isProcessComplete,
@@ -154,6 +154,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           case "Manage Users":
             openConfigureScreen(context, title);
             break;
+          case "Transactions":
+            _transactionsDialog(context);
+            break;
         }
       },
     );
@@ -187,6 +190,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       isProcessComplete = false;
     });
+  }
+
+  Future<void> _transactionsDialog(context) async {
+    List data = await FirebaseData().transactionData();
+    showMaterialResponsiveDialog(
+        context: context,
+        title: "Transactions",
+        headerColor: Get.isDarkMode ? Colors.black45 : selectedIconColor,
+        child: ListView.builder(
+            itemCount: data.length,
+            itemBuilder: (context, index) {
+              return Container(
+                padding: EdgeInsets.all(16.0),
+                width: ((MediaQuery.of(context).size.width) / 2),
+                child: Text(data[index].toString()),
+              );
+            }));
   }
 }
 

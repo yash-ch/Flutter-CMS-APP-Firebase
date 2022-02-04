@@ -80,7 +80,6 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
                 maxLines: widget.whichEvents == "News" ? 3 : 1,
                 keyboardType: TextInputType.multiline,
                 autofocus: true,
-                
               ),
             ),
           ),
@@ -104,7 +103,7 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
                   ),
                 )
               : Offstage(),
-          widget.whichEvents == "Events"
+          (widget.whichEvents == "Events" || widget.whichEvents == "News")
               ? Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 0.0),
                   child: Text(
@@ -115,7 +114,7 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
                   ),
                 )
               : Offstage(),
-          widget.whichEvents == "Events"
+          (widget.whichEvents == "Events" || widget.whichEvents == "News")
               ? Column(
                   children: [
                     InkWell(
@@ -123,13 +122,19 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
                       onTap: () {
                         showMaterialDatePicker(
                             context: context,
-                            title: "Select Event Date",
+                            title: "Select " + widget.whichEvents == "Events"
+                                ? "Event"
+                                : "News" + " Date",
                             maxLongSide: 500,
                             headerColor: Get.isDarkMode
                                 ? Colors.black45
                                 : selectedIconColor,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime.now().add(Duration(days: 90)),
+                            firstDate: widget.whichEvents == "Events"
+                                ? DateTime.now()
+                                : DateTime.now().subtract(Duration(days: 30)),
+                            lastDate: widget.whichEvents == "Events"
+                                ? DateTime.now().add(Duration(days: 90))
+                                : DateTime.now(),
                             selectedDate: DateTime.now(),
                             onChanged: (value) {
                               setState(() {
@@ -282,6 +287,7 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
                 "name": _nameOfTheEvent.text.trim(),
                 "link": _websiteLinkOfTheEvent.text.trim(),
                 "image_link": _imageLinkOfTheNews.text.trim(),
+                "publish_date": _dateOfTheEvent
               },
               widget.addOrChange == "Add" ? 0 : 1,
               widget.changeEvent);
@@ -328,11 +334,11 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
         } else if (widget.whichEvents == "News") {
           List newsList = await FirebaseData().newsData();
           for (var news in newsList) {
-            
             if (news["name"] == widget.changeEvent) {
               _imageLinkOfTheNews.text = news["image_link"];
               _websiteLinkOfTheEvent.text = news["link"];
               _nameOfTheEvent.text = news["name"];
+              _dateOfTheEvent = news["publish_date"];
               setState(() {});
             }
           }
