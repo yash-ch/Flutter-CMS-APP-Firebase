@@ -1034,7 +1034,6 @@ class FirebaseData {
                     .where("name", isEqualTo: previousName)
                     .get();
             for (var item in docuIdSnapshot.docs) {
-              await _deleteImage("images/news/$previousName");
               await postsReference.doc(item.id).delete();
               Fluttertoast.showToast(
                   msg: "News was successfully deleted.",

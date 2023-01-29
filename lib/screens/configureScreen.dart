@@ -94,8 +94,11 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
                                                   widget.resources["semester"],
                                               subject:
                                                   widget.resources["subject"],
-                                              course:
-                                                  widget.resources["aeccOrGE"],
+                                              course: widget.whichScreen ==
+                                                      "Resources"
+                                                  ? widget.resources["course"]
+                                                  : widget
+                                                      .resources["aeccOrGE"],
                                               materialType: widget
                                                   .resources["materialType"],
                                               changeMaterial: "none",
@@ -235,12 +238,14 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
           break;
         case "AECC&GE":
           _documentsList = [];
-          List aeccGEData = await FirebaseData().aeccOrGEData(context,
+          List aeccGEData = await FirebaseData().aeccOrGEData(
+              context,
               widget.resources["semester"],
               widget.resources["aeccOrGE"],
               widget.resources["materialType"],
               widget.resources["subject"],
-              0, "none",{});
+              0,
+              "none", {});
           for (var material in aeccGEData) {
             _documentsList.add(material["name"]);
             _updatedBy[material["name"]] = material["updatedBy"];
@@ -249,7 +254,7 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
           setState(() {
             _isDocumentsLoaded = true;
           });
-        break;
+          break;
         case "News":
           _documentsList = [];
           List eventsData = await FirebaseData().newsData();
@@ -368,13 +373,16 @@ class _ConfigureScreenState extends State<ConfigureScreen> {
             context,
             PageRouteBuilder(
                 pageBuilder: (BuildContext context, animation1, animation2) {
-                  return (widget.whichScreen == "Resources" ||widget.whichScreen == "AECC&GE")
+                  return (widget.whichScreen == "Resources" ||
+                          widget.whichScreen == "AECC&GE")
                       ? AddOrChangeResources(
                           whichScreen: widget.whichScreen,
                           addOrChange: "Change",
                           semester: widget.resources["semester"],
                           subject: widget.resources["subject"],
-                          course: widget.resources["aeccOrGE"],
+                          course: widget.whichScreen == "Resources"
+                              ? widget.resources["course"]
+                              : widget.resources["aeccOrGE"],
                           materialType: widget.resources["materialType"],
                           changeMaterial: title)
                       : widget.whichScreen == "Manage Users"

@@ -224,14 +224,19 @@ class _AddOrChangeEventsAndNewsState extends State<AddOrChangeEventsAndNews> {
                               ),
                             ),
                             onConfirmed: () {
-                              FirebaseData().managingEvents(
-                                  context,
-                                  widget.whichEvents == "Top Banners"
-                                      ? "top_banners"
-                                      : "all_events",
-                                  {},
-                                  2,
-                                  widget.changeEvent);
+                              if (widget.whichEvents == "News") {
+                                FirebaseData().managingNews(
+                                    context, {}, 2, widget.changeEvent);
+                              } else {
+                                FirebaseData().managingEvents(
+                                    context,
+                                    widget.whichEvents == "Top Banners"
+                                        ? "top_banners"
+                                        : "all_events",
+                                    {},
+                                    2,
+                                    widget.changeEvent);
+                              }
                             },
                           );
                         },
